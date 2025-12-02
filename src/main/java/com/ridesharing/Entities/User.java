@@ -17,20 +17,26 @@ public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String phone;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(nullable = true)
+    private String password; // BCrypt hashed; null for OTP/google users
 
     @Enumerated(EnumType.STRING)
-    private Role role = Role.Role.ROLE_USER;
+    private Role role = Role.ROLE_USER;
 
     private boolean enabled = true;
 
     private Instant createdAt = Instant.now();
+
+    private boolean emailVerified = false;
+
+    // provider: LOCAL, GOOGLE, OTP
+    private String provider = "LOCAL";
 }

@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "drivers")
+@Table(name = "drivers", indexes = {@Index(columnList = "email")})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,25 +16,25 @@ public class Driver {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String phone;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(nullable = true)
+    private String password; // hashed, may be null for OAuth
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.ROLE_DRIVER;
 
     private boolean approved = false;
-
     private boolean online = false;
-
     private Instant createdAt = Instant.now();
 
-    private String vehicleNumber;
     private String vehicleModel;
+    private String vehicleNumber;
+    private String provider = "LOCAL";
 }
