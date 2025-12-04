@@ -7,8 +7,12 @@ import com.ridesharing.Entities.User;
 import com.ridesharing.Services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,42 +21,63 @@ public class AuthController {
 
     private final AuthService authService;
 
+    private <T> ResponseEntity<Map<String, Object>> wrapResponse(T data, String message) {
+        return ResponseEntity.ok(Map.of(
+                "timestamp", Instant.now(),
+                "status", HttpStatus.OK.value(),
+                "message", message,
+                "data", data
+        ));
+    }
+
     @PostMapping("/register/user")
-    public ResponseEntity<User> registerUser(@Valid @RequestBody RegisterRequest req) {
-        return ResponseEntity.ok(authService.registerUser(req));
+    public ResponseEntity<Map<String, Object>> registerUser(@Valid @RequestBody RegisterRequest req) {
+        User user = authService.registerUser(req);
+        return wrapResponse(user, "User registered successfully");
     }
 
     @PostMapping("/register/driver")
-    public ResponseEntity<Driver> registerDriver(@Valid @RequestBody RegisterRequest req) {
-        return ResponseEntity.ok(authService.registerDriver(req));
+    public ResponseEntity<Map<String, Object>> registerDriver(@Valid @RequestBody RegisterRequest req) {
+        Driver driver = authService.registerDriver(req);
+        return wrapResponse(driver, "Driver registered successfully");
     }
 
     @PostMapping("/register/admin")
-    public ResponseEntity<Admin> registerAdmin(@Valid @RequestBody RegisterRequest req) {
-        return ResponseEntity.ok(authService.registerAdmin(req));
+    public ResponseEntity<Map<String, Object>> registerAdmin(@Valid @RequestBody RegisterRequest req) {
+        Admin admin = authService.registerAdmin(req);
+        return wrapResponse(admin, "Admin registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
-        return ResponseEntity.ok(authService.login(req));
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest req) {
+        AuthResponse auth = authService.login(req);
+        return wrapResponse(auth, "Login successful");
     }
 
-    // OTP: request OTP (returns OTP in response for dev; integrate email/SMS in prod)
     @PostMapping("/otp/send")
-    public ResponseEntity<String> sendOtp(@Valid @RequestBody OtpRequest req) {
+    public ResponseEntity<Map<String, Object>> sendOtp(@Valid @RequestBody OtpRequest req) {
         String otp = authService.sendOtp(req);
-        // Dev behavior: return OTP for easier testing
-        return ResponseEntity.ok(otp);
+        return wrapResponse(otp, "OTP sent successfully (dev-only: returned in response)");
     }
 
     @PostMapping("/otp/verify")
-    public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody OtpVerifyRequest req) {
-        return ResponseEntity.ok(authService.verifyOtp(req));
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpVerifyRequest req) {
+        AuthResponse auth = authService.verifyOtp(req);
+        return wrapResponse(auth, "OTP verified successfully");
     }
 
-    // Google id_token login (frontend should acquire id_token from Google Sign-In and post it here)
     @PostMapping("/google")
-    public ResponseEntity<AuthResponse> google(@Valid @RequestBody GoogleAuthRequest req) {
-        return ResponseEntity.ok(authService.googleLogin(req.getIdToken()));
+    public ResponseEntity<Map<String, Object>> googleLogin(@Valid @RequestBody GoogleAuthRequest req) {
+        AuthResponse auth = authService.googleLogin(req.getIdToken());
+        return wrapResponse(auth, "Google login successful");
+    }
+
+    // Optional: simple health check
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "timestamp", Instant.now()
+        ));
     }
 }
