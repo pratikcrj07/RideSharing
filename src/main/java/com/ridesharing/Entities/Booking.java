@@ -24,7 +24,7 @@ public class Booking {
     private double dropLat;
     private double dropLng;
 
-    private String status; // REQUESTED, ACCEPTED, ONGOING, COMPLETED, CANCELLED
+    private String status;
 
     private double fare;
 

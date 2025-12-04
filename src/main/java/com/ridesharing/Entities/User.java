@@ -26,7 +26,7 @@ public class User {
     private String phone;
 
     @Column(nullable = true)
-    private String password; // BCrypt hashed; null for OTP/google users
+    private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.ROLE_USER;
