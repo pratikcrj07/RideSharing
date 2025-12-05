@@ -3,6 +3,7 @@ package com.ridesharing.Entities;
 import com.ridesharing.Entities.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -32,7 +33,7 @@ public class User {
     private Role role = Role.ROLE_USER;
 
     private boolean enabled = true;
-
+    @CreationTimestamp
     private Instant createdAt = Instant.now();
 
     private boolean emailVerified = false;
