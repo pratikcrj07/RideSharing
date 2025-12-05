@@ -53,7 +53,7 @@ public class KafkaConfig {
         return factory;
     }
 
-    // Admin client (optional)
+    // Admin client
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String,Object> cfg = new HashMap<>();
