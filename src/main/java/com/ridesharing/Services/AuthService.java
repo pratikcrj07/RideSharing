@@ -30,9 +30,7 @@ public class AuthService {
     private final OtpService otpService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    // ---------------------------------------------------------
-    // USER REGISTER
-    // ---------------------------------------------------------
+
     @Transactional
     public User registerUser(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
@@ -57,9 +55,7 @@ public class AuthService {
         return saved;
     }
 
-    // ---------------------------------------------------------
-    // DRIVER REGISTER
-    // ---------------------------------------------------------
+
     @Transactional
     public Driver registerDriver(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
@@ -83,9 +79,7 @@ public class AuthService {
         return saved;
     }
 
-    // ---------------------------------------------------------
-    // ADMIN REGISTER
-    // ---------------------------------------------------------
+
     @Transactional
     public Admin registerAdmin(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
@@ -106,19 +100,16 @@ public class AuthService {
         return saved;
     }
 
-    // ---------------------------------------------------------
-    // LOGIN
-    // ---------------------------------------------------------
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
-        // Try User
+        // Try to User
         Optional<User> u = userRepository.findByEmail(email);
         if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword())) {
             return generateTokens(u.get().getEmail(), u.get().getRole().name());
         }
 
-        // Try Driver
+        // Try to  Driver
         Optional<Driver> d = driverRepository.findByEmail(email);
         if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword())) {
             return generateTokens(d.get().getEmail(), d.get().getRole().name());
@@ -142,9 +133,7 @@ public class AuthService {
         return new AuthResponse(access, refresh);
     }
 
-    // ---------------------------------------------------------
-    // OTP SEND
-    // ---------------------------------------------------------
+
     public String sendOtp(OtpRequest req) {
         String email = req.getEmail().toLowerCase();
         String otp = otpService.generateAndStoreOtp(email);
@@ -152,9 +141,6 @@ public class AuthService {
         return otp; // dev mode
     }
 
-    // ---------------------------------------------------------
-    // OTP VERIFY
-    // ---------------------------------------------------------
     public AuthResponse verifyOtp(OtpVerifyRequest req) {
         String email = req.getEmail().toLowerCase();
 
@@ -178,9 +164,7 @@ public class AuthService {
         return generateTokens(user.getEmail(), user.getRole().name());
     }
 
-    // ---------------------------------------------------------
-    // GOOGLE LOGIN
-    // ---------------------------------------------------------
+
     public AuthResponse googleLogin(String idToken) {
         GoogleTokenVerifier.Payload p = GoogleTokenVerifier.verify(idToken);
         String email = p.getEmail().toLowerCase();
