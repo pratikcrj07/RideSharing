@@ -5,6 +5,7 @@ import com.ridesharing.Entities.Admin;
 import com.ridesharing.Entities.Driver;
 import com.ridesharing.Entities.Role;
 import com.ridesharing.Entities.User;
+import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.AdminRepository;
 import com.ridesharing.Repository.DriverRepository;
 import com.ridesharing.Repository.UserRepository;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -28,153 +28,175 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
-    private final KafkaTemplate<String, String> kafkaTemplate; // optional: event logs
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
+    // ---------------------------------------------------------
+    // USER REGISTER
+    // ---------------------------------------------------------
     @Transactional
     public User registerUser(RegisterRequest r) {
-        if (userRepository.existsByEmail(r.getEmail())) {
-            throw new IllegalArgumentException("email already used");
-        }
-        User u = User.builder()
+        String email = r.getEmail().toLowerCase();
+
+        if (userRepository.existsByEmail(email))
+            throw new ApiException("Email already used");
+
+        User user = User.builder()
                 .name(r.getName())
-                .email(r.getEmail().toLowerCase())
+                .email(email)
                 .phone(r.getPhone())
                 .password(passwordEncoder.encode(r.getPassword()))
                 .role(Role.ROLE_USER)
                 .provider("LOCAL")
                 .emailVerified(false)
+                .enabled(true)
                 .build();
-        User saved = userRepository.save(u);
+
+        User saved = userRepository.save(user);
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + saved.getEmail());
+
         return saved;
     }
 
+    // ---------------------------------------------------------
+    // DRIVER REGISTER
+    // ---------------------------------------------------------
     @Transactional
     public Driver registerDriver(RegisterRequest r) {
-        if (driverRepository.existsByEmail(r.getEmail())) {
-            throw new IllegalArgumentException("email already used");
-        }
+        String email = r.getEmail().toLowerCase();
+
+        if (driverRepository.existsByEmail(email))
+            throw new ApiException("Email already used");
+
         Driver d = Driver.builder()
                 .name(r.getName())
-                .email(r.getEmail().toLowerCase())
+                .email(email)
                 .phone(r.getPhone())
                 .password(passwordEncoder.encode(r.getPassword()))
                 .role(Role.ROLE_DRIVER)
                 .provider("LOCAL")
                 .approved(false)
                 .build();
+
         Driver saved = driverRepository.save(d);
         kafkaTemplate.send("auth-events", "DRIVER_REGISTERED:" + saved.getEmail());
+
         return saved;
     }
 
+    // ---------------------------------------------------------
+    // ADMIN REGISTER
+    // ---------------------------------------------------------
     @Transactional
     public Admin registerAdmin(RegisterRequest r) {
-        if (adminRepository.findByEmail(r.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("email already used");
-        }
+        String email = r.getEmail().toLowerCase();
+
+        if (adminRepository.existsByEmail(email))
+            throw new ApiException("Email already used");
+
         Admin a = Admin.builder()
                 .name(r.getName())
-                .email(r.getEmail().toLowerCase())
+                .email(email)
                 .password(passwordEncoder.encode(r.getPassword()))
                 .role(Role.ROLE_ADMIN)
                 .build();
+
         Admin saved = adminRepository.save(a);
         kafkaTemplate.send("auth-events", "ADMIN_REGISTERED:" + saved.getEmail());
+
         return saved;
     }
 
+    // ---------------------------------------------------------
+    // LOGIN
+    // ---------------------------------------------------------
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
-        // try user
+        // Try User
         Optional<User> u = userRepository.findByEmail(email);
-        if (u.isPresent() && u.get().getPassword() != null
-                && passwordEncoder.matches(req.getPassword(), u.get().getPassword())) {
-            String access = jwtUtil.generateToken(u.get().getEmail(), u.get().getRole().name());
-            String refresh = jwtUtil.generateRefreshToken(u.get().getEmail(), u.get().getRole().name());
-            kafkaTemplate.send("auth-events", "LOGIN_USER:" + email);
-            return new AuthResponse(access, refresh);
+        if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword())) {
+            return generateTokens(u.get().getEmail(), u.get().getRole().name());
         }
 
-        // try driver
+        // Try Driver
         Optional<Driver> d = driverRepository.findByEmail(email);
-        if (d.isPresent() && d.get().getPassword() != null
-                && passwordEncoder.matches(req.getPassword(), d.get().getPassword())) {
-            String access = jwtUtil.generateToken(d.get().getEmail(), d.get().getRole().name());
-            String refresh = jwtUtil.generateRefreshToken(d.get().getEmail(), d.get().getRole().name());
-            kafkaTemplate.send("auth-events", "LOGIN_DRIVER:" + email);
-            return new AuthResponse(access, refresh);
+        if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword())) {
+            return generateTokens(d.get().getEmail(), d.get().getRole().name());
         }
 
-        // try admin
+        // Try Admin
         Optional<Admin> a = adminRepository.findByEmail(email);
-        if (a.isPresent() && a.get().getPassword() != null
-                && passwordEncoder.matches(req.getPassword(), a.get().getPassword())) {
-            String access = jwtUtil.generateToken(a.get().getEmail(), a.get().getRole().name());
-            String refresh = jwtUtil.generateRefreshToken(a.get().getEmail(), a.get().getRole().name());
-            kafkaTemplate.send("auth-events", "LOGIN_ADMIN:" + email);
-            return new AuthResponse(access, refresh);
+        if (a.isPresent() && passwordEncoder.matches(req.getPassword(), a.get().getPassword())) {
+            return generateTokens(a.get().getEmail(), a.get().getRole().name());
         }
 
-        throw new IllegalArgumentException("invalid credentials");
+        throw new ApiException("Invalid email or password");
     }
 
-    // OTP flows (generate + verify)
+    private AuthResponse generateTokens(String email, String role) {
+        String access = jwtUtil.generateToken(email, role);
+        String refresh = jwtUtil.generateRefreshToken(email, role);
+
+        kafkaTemplate.send("auth-events", "LOGIN:" + email);
+
+        return new AuthResponse(access, refresh);
+    }
+
+    // ---------------------------------------------------------
+    // OTP SEND
+    // ---------------------------------------------------------
     public String sendOtp(OtpRequest req) {
         String email = req.getEmail().toLowerCase();
         String otp = otpService.generateAndStoreOtp(email);
-        // TODO: integrate with SMS/Email provider — currently we just return OTP (dev only)
         kafkaTemplate.send("auth-events", "OTP_SENT:" + email);
-        return otp;
+        return otp; // dev mode
     }
 
+    // ---------------------------------------------------------
+    // OTP VERIFY
+    // ---------------------------------------------------------
     public AuthResponse verifyOtp(OtpVerifyRequest req) {
         String email = req.getEmail().toLowerCase();
-        if (!otpService.validateOtp(email, req.getOtp())) {
-            throw new IllegalArgumentException("invalid otp");
-        }
 
-        // if user exists, issue token; else create OTP user
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User nu = User.builder()
-                    .name("OTP_USER")
-                    .email(email)
-                    .provider("OTP")
-                    .role(Role.ROLE_USER)
-                    .emailVerified(true)
-                    .build();
-            return userRepository.save(nu);
-        });
+        if (!otpService.validateOtp(email, req.getOtp()))
+            throw new ApiException("Invalid OTP");
+
+        User user = userRepository.findByEmail(email).orElseGet(() ->
+                userRepository.save(User.builder()
+                        .name("OTP_USER")
+                        .email(email)
+                        .provider("OTP")
+                        .role(Role.ROLE_USER)
+                        .emailVerified(true)
+                        .enabled(true)
+                        .build()
+                )
+        );
 
         otpService.removeOtp(email);
-        String access = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        String refresh = jwtUtil.generateRefreshToken(user.getEmail(), user.getRole().name());
-        kafkaTemplate.send("auth-events", "OTP_VERIFIED:" + email);
-        return new AuthResponse(access, refresh);
+
+        return generateTokens(user.getEmail(), user.getRole().name());
     }
 
-    // Google id_token verification flow — front end must POST idToken
+    // ---------------------------------------------------------
+    // GOOGLE LOGIN
+    // ---------------------------------------------------------
     public AuthResponse googleLogin(String idToken) {
-        // Use GoogleTokenVerifier (below) to verify and obtain email/name — throw on failure
-        GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(idToken);
-        String email = payload.getEmail().toLowerCase();
-        String name = payload.getName();
+        GoogleTokenVerifier.Payload p = GoogleTokenVerifier.verify(idToken);
+        String email = p.getEmail().toLowerCase();
 
-        User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User nu = User.builder()
-                    .name(name != null ? name : "GoogleUser")
-                    .email(email)
-                    .provider("GOOGLE")
-                    .role(Role.ROLE_USER)
-                    .emailVerified(true)
-                    .build();
-            return userRepository.save(nu);
-        });
+        User user = userRepository.findByEmail(email).orElseGet(() ->
+                userRepository.save(User.builder()
+                        .name(p.getName())
+                        .email(email)
+                        .provider("GOOGLE")
+                        .emailVerified(true)
+                        .role(Role.ROLE_USER)
+                        .enabled(true)
+                        .build()
+                )
+        );
 
-        String access = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        String refresh = jwtUtil.generateRefreshToken(user.getEmail(), user.getRole().name());
-        kafkaTemplate.send("auth-events", "GOOGLE_LOGIN:" + email);
-        return new AuthResponse(access, refresh);
+        return generateTokens(user.getEmail(), user.getRole().name());
     }
 }
