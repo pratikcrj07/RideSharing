@@ -28,6 +28,9 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Ignore secrets
+Ride.env
+src/main/resources/application.properties
 
 /Ride.env
 ### VS Code ###
