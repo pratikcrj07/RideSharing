@@ -54,12 +54,6 @@ public class AuthController {
         return wrapResponse(auth, "Login successful");
     }
 
-    @PostMapping("/otp/send")
-    public ResponseEntity<Map<String, Object>> sendOtp(@Valid @RequestBody OtpRequest req) {
-        String otp = authService.sendOtp(req);
-        return wrapResponse(otp, "OTP sent successfully (dev-only: returned in response)");
-    }
-
     @PostMapping("/otp/verify")
     public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpVerifyRequest req) {
         AuthResponse auth = authService.verifyOtp(req);
@@ -72,7 +66,6 @@ public class AuthController {
         return wrapResponse(auth, "Google login successful");
     }
 
-    // Optional: simple health check
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> healthCheck() {
         return ResponseEntity.ok(Map.of(

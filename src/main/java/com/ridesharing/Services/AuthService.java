@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,11 +31,9 @@ public class AuthService {
     private final OtpService otpService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-
     @Transactional
     public User registerUser(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
-
         if (userRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
@@ -51,15 +50,12 @@ public class AuthService {
 
         User saved = userRepository.save(user);
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + saved.getEmail());
-
         return saved;
     }
-
 
     @Transactional
     public Driver registerDriver(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
-
         if (driverRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
@@ -75,15 +71,12 @@ public class AuthService {
 
         Driver saved = driverRepository.save(d);
         kafkaTemplate.send("auth-events", "DRIVER_REGISTERED:" + saved.getEmail());
-
         return saved;
     }
-
 
     @Transactional
     public Admin registerAdmin(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
-
         if (adminRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
@@ -96,30 +89,26 @@ public class AuthService {
 
         Admin saved = adminRepository.save(a);
         kafkaTemplate.send("auth-events", "ADMIN_REGISTERED:" + saved.getEmail());
-
         return saved;
     }
 
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
-        // Try to User
+        // Check User
         Optional<User> u = userRepository.findByEmail(email);
-        if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword())) {
+        if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword()))
             return generateTokens(u.get().getEmail(), u.get().getRole().name());
-        }
 
-        // Try to  Driver
+        // Check Driver
         Optional<Driver> d = driverRepository.findByEmail(email);
-        if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword())) {
+        if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword()))
             return generateTokens(d.get().getEmail(), d.get().getRole().name());
-        }
 
-        // Try Admin
+        // Check Admin
         Optional<Admin> a = adminRepository.findByEmail(email);
-        if (a.isPresent() && passwordEncoder.matches(req.getPassword(), a.get().getPassword())) {
+        if (a.isPresent() && passwordEncoder.matches(req.getPassword(), a.get().getPassword()))
             return generateTokens(a.get().getEmail(), a.get().getRole().name());
-        }
 
         throw new ApiException("Invalid email or password");
     }
@@ -127,26 +116,17 @@ public class AuthService {
     private AuthResponse generateTokens(String email, String role) {
         String access = jwtUtil.generateToken(email, role);
         String refresh = jwtUtil.generateRefreshToken(email, role);
-
         kafkaTemplate.send("auth-events", "LOGIN:" + email);
-
         return new AuthResponse(access, refresh);
-    }
-
-
-    public String sendOtp(OtpRequest req) {
-        String email = req.getEmail().toLowerCase();
-        String otp = otpService.generateAndStoreOtp(email);
-        kafkaTemplate.send("auth-events", "OTP_SENT:" + email);
-        return otp; // dev mode
     }
 
     public AuthResponse verifyOtp(OtpVerifyRequest req) {
         String email = req.getEmail().toLowerCase();
 
         if (!otpService.validateOtp(email, req.getOtp()))
-            throw new ApiException("Invalid OTP");
+            throw new ApiException("Invalid or expired OTP");
 
+        // Automatically create OTP_USER if not exists
         User user = userRepository.findByEmail(email).orElseGet(() ->
                 userRepository.save(User.builder()
                         .name("OTP_USER")
@@ -155,15 +135,13 @@ public class AuthService {
                         .role(Role.ROLE_USER)
                         .emailVerified(true)
                         .enabled(true)
-                        .build()
-                )
+                        .build())
         );
 
         otpService.removeOtp(email);
 
         return generateTokens(user.getEmail(), user.getRole().name());
     }
-
 
     public AuthResponse googleLogin(String idToken) {
         GoogleTokenVerifier.Payload p = GoogleTokenVerifier.verify(idToken);
@@ -177,8 +155,7 @@ public class AuthService {
                         .emailVerified(true)
                         .role(Role.ROLE_USER)
                         .enabled(true)
-                        .build()
-                )
+                        .build())
         );
 
         return generateTokens(user.getEmail(), user.getRole().name());
