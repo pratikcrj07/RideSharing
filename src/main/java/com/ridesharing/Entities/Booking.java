@@ -17,7 +17,7 @@ public class Booking {
     private Long id;
 
     private Long userId;
-    private Long driverId; // assigned driver; nullable initially
+    private Long driverId;
 
     private double pickupLat;
     private double pickupLng;
