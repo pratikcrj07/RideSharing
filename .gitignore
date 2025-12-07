@@ -32,6 +32,5 @@ build/
 Ride.env
 src/main/resources/application.properties
 
-/Ride.env
 ### VS Code ###
 .vscode/
