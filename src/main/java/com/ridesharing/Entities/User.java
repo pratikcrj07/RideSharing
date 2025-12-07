@@ -38,6 +38,6 @@ public class User {
 
     private boolean emailVerified = false;
 
-    // provider: LOCAL, GOOGLE, OTP
+
     private String provider = "LOCAL";
 }
