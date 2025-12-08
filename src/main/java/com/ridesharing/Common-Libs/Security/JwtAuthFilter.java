@@ -1,4 +1,4 @@
-package com.ridesharing.Security;
+package com.ridesharing.CommonLibs.Exception.Security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

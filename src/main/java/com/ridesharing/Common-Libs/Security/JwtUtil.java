@@ -1,4 +1,4 @@
-package com.ridesharing.Security;
+package com.ridesharing.CommonLibs.Exception.Security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
