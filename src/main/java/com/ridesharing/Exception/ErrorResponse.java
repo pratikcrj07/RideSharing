@@ -1,4 +1,4 @@
-package com.ridesharing.CommonLibs.Exception.Exception;
+package com.ridesharing.Exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

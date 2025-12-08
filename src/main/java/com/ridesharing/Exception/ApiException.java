@@ -1,4 +1,4 @@
-package com.ridesharing.CommonLibs.Exception.Exception;
+package com.ridesharing.Exception;
 
     public class ApiException extends RuntimeException {
         public ApiException(String message) {
