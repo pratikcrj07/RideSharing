@@ -11,14 +11,13 @@ public class RideSharingApplication {
 
     public static void main(String[] args) {
 
-        // Load .env from project root (Git safe)
-        Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir")) // root directory
-                .ignoreIfMissing()
-                .load();
+        // Load .env
+        Dotenv dotenv = Dotenv.configure().ignoreIfMalformed().ignoreIfMissing().load();
 
-        // Set environment variables as system properties
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+        // Transfer .env values to System properties so Spring can read them
+        dotenv.entries().forEach(entry -> {
+            System.setProperty(entry.getKey(), entry.getValue());
+        });
 
         SpringApplication.run(RideSharingApplication.class, args);
     }
