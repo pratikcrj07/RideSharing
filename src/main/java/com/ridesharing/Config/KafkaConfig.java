@@ -19,7 +19,7 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    // Producer
+    // kafka Producer
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String,Object> props = new HashMap<>();
