@@ -100,7 +100,7 @@ public class AuthService {
         if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword()))
             return generateTokens(u.get().getEmail(), u.get().getRole().name());
 
-        // Check Driver
+        // Check  the Driver
         Optional<Driver> d = driverRepository.findByEmail(email);
         if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword()))
             return generateTokens(d.get().getEmail(), d.get().getRole().name());
