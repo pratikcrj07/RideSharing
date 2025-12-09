@@ -34,7 +34,7 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    // Consumer factory (simple String consumer)
+    // Consumer for kafka factory (simple String consumer)
     @Bean
     public ConsumerFactory<String,String> consumerFactory() {
         var props = new HashMap<String,Object>();
