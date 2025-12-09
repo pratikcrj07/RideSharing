@@ -126,7 +126,7 @@ public class AuthService {
         if (!otpService.validateOtp(email, req.getOtp()))
             throw new ApiException("Invalid or expired OTP");
 
-        // Automatically create OTP_USER if not exists
+        // Automatically create the OTP_USER if not exists
         User user = userRepository.findByEmail(email).orElseGet(() ->
                 userRepository.save(User.builder()
                         .name("OTP_USER")
