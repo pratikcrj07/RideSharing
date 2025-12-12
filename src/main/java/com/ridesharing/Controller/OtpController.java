@@ -1,6 +1,7 @@
 package com.ridesharing.Controller;
 
 import com.ridesharing.DTOs.OtpRequest;
+import com.ridesharing.DTOs.OtpVerifyRequest;
 import com.ridesharing.DTOs.OtpResponse;
 import com.ridesharing.Services.EmailService;
 import com.ridesharing.Services.OtpService;
@@ -25,16 +26,25 @@ public class OtpController {
             return ResponseEntity.ok(new OtpResponse(true, "OTP sent to email successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new OtpResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace(); // log
+            return ResponseEntity.status(500).body(new OtpResponse(false, "Something went wrong"));
         }
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<OtpResponse> verifyOtp(@Valid @RequestBody OtpRequest request, @RequestParam String otp) {
-        boolean valid = otpService.validateOtp(request.getEmail(), otp);
-        if (valid) {
-            return ResponseEntity.ok(new OtpResponse(true, "OTP verified successfully"));
-        } else {
-            return ResponseEntity.badRequest().body(new OtpResponse(false, "Invalid or expired OTP"));
+    public ResponseEntity<OtpResponse> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        try {
+            boolean valid = otpService.validateOtp(request.getEmail(), request.getOtp());
+            if (valid) {
+                return ResponseEntity.ok(new OtpResponse(true, "OTP verified successfully"));
+            } else {
+                return ResponseEntity.badRequest().body(new OtpResponse(false, "Invalid or expired OTP"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // log for debugging
+            return ResponseEntity.status(500)
+                    .body(new OtpResponse(false, "Something went wrong"));
         }
     }
 }
