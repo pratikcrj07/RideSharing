@@ -36,7 +36,7 @@ public class AuthController {
         return wrapResponse(user, "User registered successfully");
     }
 
-//    @PostMapping("/register/driver")
+//    @PostMapping("/driver/")
 //    public ResponseEntity<Map<String, Object>> registerDriver(@Valid @RequestBody RegisterRequest req) {
 //        Driver driver = authService.registerDriver(req);
 //        return wrapResponse(driver, "Driver registered successfully");

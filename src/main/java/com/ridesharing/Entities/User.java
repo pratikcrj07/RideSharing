@@ -40,4 +40,9 @@ public class User {
 
 
     private String provider = "LOCAL";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "driver_status")
+    private DriverStatus driverStatus = DriverStatus.NOT_APPLIED;
+
 }
