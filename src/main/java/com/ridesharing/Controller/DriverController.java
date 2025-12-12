@@ -18,7 +18,7 @@ public class DriverController {
     public ResponseEntity<String> apply(@RequestHeader("Authorization") String token,
                                         @RequestBody DriverApplication req) {
 
-        Long userId = jwtUtil.extractUserId(token.replace("Bearer ", ""));
+        Long userId = jwtUtil.getUserId(token.replace("Bearer ", ""));
 
         return ResponseEntity.ok(driverService.apply(userId, req));
     }
