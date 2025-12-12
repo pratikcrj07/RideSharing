@@ -25,13 +25,12 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        // ensure secret is sufficiently long
         signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(String subject, String role) {
+    public String generateToken(Long userId, String role) {
         return Jwts.builder()
-                .setSubject(subject)
+                .setSubject(String.valueOf(userId))          // store userId as subject
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
@@ -39,9 +38,9 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(String subject, String role) {
+    public String generateRefreshToken(Long userId, String role) {
         return Jwts.builder()
-                .setSubject(subject)
+                .setSubject(String.valueOf(userId))
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtRefreshExpirationMs))
@@ -58,13 +57,23 @@ public class JwtUtil {
         }
     }
 
-    public String getSubject(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();
-        return claims.getSubject();
+    public Long extractUserId(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return Long.parseLong(claims.getSubject());   // subject = userId
     }
 
-    public String getRole(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build().parseClaimsJws(token).getBody();
+    public String extractRole(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
         return claims.get("role", String.class);
     }
 }

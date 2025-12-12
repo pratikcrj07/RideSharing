@@ -1,10 +1,7 @@
 package com.ridesharing.Services;
 
 import com.ridesharing.DTOs.*;
-import com.ridesharing.Entities.Admin;
-import com.ridesharing.Entities.Driver;
-import com.ridesharing.Entities.Role;
-import com.ridesharing.Entities.User;
+import com.ridesharing.Entities.*;
 import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.AdminRepository;
 import com.ridesharing.Repository.DriverRepository;
@@ -31,6 +28,8 @@ public class AuthService {
     private final OtpService otpService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
+
+
     @Transactional
     public User registerUser(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
@@ -46,6 +45,7 @@ public class AuthService {
                 .provider("LOCAL")
                 .emailVerified(false)
                 .enabled(true)
+                .driverStatus(DriverStatus.NOT_APPLIED)
                 .build();
 
         User saved = userRepository.save(user);
@@ -92,33 +92,41 @@ public class AuthService {
         return saved;
     }
 
+
+
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
-        // Check User
+        // 1 Check User
         Optional<User> u = userRepository.findByEmail(email);
         if (u.isPresent() && passwordEncoder.matches(req.getPassword(), u.get().getPassword()))
-            return generateTokens(u.get().getEmail(), u.get().getRole().name());
+            return generateTokensForUser(u.get());
 
-        // Check  the Driver
+        // 2 Check Driver
         Optional<Driver> d = driverRepository.findByEmail(email);
         if (d.isPresent() && passwordEncoder.matches(req.getPassword(), d.get().getPassword()))
-            return generateTokens(d.get().getEmail(), d.get().getRole().name());
+            return generateTokens(d.get().getId(), d.get().getRole().name());
 
-        // Check Admin
+        //  Check Admin
         Optional<Admin> a = adminRepository.findByEmail(email);
         if (a.isPresent() && passwordEncoder.matches(req.getPassword(), a.get().getPassword()))
-            return generateTokens(a.get().getEmail(), a.get().getRole().name());
+            return generateTokens(a.get().getId(), a.get().getRole().name());
 
         throw new ApiException("Invalid email or password");
     }
 
-    private AuthResponse generateTokens(String email, String role) {
-        String access = jwtUtil.generateToken(email, role);
-        String refresh = jwtUtil.generateRefreshToken(email, role);
-        kafkaTemplate.send("auth-events", "LOGIN:" + email);
+    private AuthResponse generateTokensForUser(User user) {
+        return generateTokens(user.getId(), user.getRole().name());
+    }
+
+    private AuthResponse generateTokens(Long userId, String role) {
+        String access = jwtUtil.generateToken(userId, role);
+        String refresh = jwtUtil.generateRefreshToken(userId, role);
+        kafkaTemplate.send("auth-events", "LOGIN:" + userId);
         return new AuthResponse(access, refresh);
     }
+
+
 
     public AuthResponse verifyOtp(OtpVerifyRequest req) {
         String email = req.getEmail().toLowerCase();
@@ -126,7 +134,7 @@ public class AuthService {
         if (!otpService.validateOtp(email, req.getOtp()))
             throw new ApiException("Invalid or expired OTP");
 
-        // Automatically create the OTP_USER if not exists
+        // Automatically create user if not exists
         User user = userRepository.findByEmail(email).orElseGet(() ->
                 userRepository.save(User.builder()
                         .name("OTP_USER")
@@ -135,29 +143,32 @@ public class AuthService {
                         .role(Role.ROLE_USER)
                         .emailVerified(true)
                         .enabled(true)
+                        .driverStatus(DriverStatus.NOT_APPLIED)
                         .build())
         );
 
         otpService.removeOtp(email);
 
-        return generateTokens(user.getEmail(), user.getRole().name());
+        return generateTokensForUser(user);
     }
 
+
     public AuthResponse googleLogin(String idToken) {
-        GoogleTokenVerifier.Payload p = GoogleTokenVerifier.verify(idToken);
-        String email = p.getEmail().toLowerCase();
+        GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(idToken);
+        String email = payload.getEmail().toLowerCase();
 
         User user = userRepository.findByEmail(email).orElseGet(() ->
                 userRepository.save(User.builder()
-                        .name(p.getName())
+                        .name(payload.getName())
                         .email(email)
                         .provider("GOOGLE")
                         .emailVerified(true)
                         .role(Role.ROLE_USER)
                         .enabled(true)
+                        .driverStatus(DriverStatus.NOT_APPLIED)
                         .build())
         );
 
-        return generateTokens(user.getEmail(), user.getRole().name());
+        return generateTokensForUser(user);
     }
 }
