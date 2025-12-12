@@ -39,13 +39,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String subject = jwtUtil.getSubject(token);
+        // Extract userId and role from token
+        Long userId = jwtUtil.getUserId(token);
         String role = jwtUtil.getRole(token);
 
-        var auth = new UsernamePasswordAuthenticationToken(subject, null,
+        // Set authentication in Spring Security context
+        var auth = new UsernamePasswordAuthenticationToken(userId, null,
                 List.of(new SimpleGrantedAuthority(role)));
-
         SecurityContextHolder.getContext().setAuthentication(auth);
+
         filterChain.doFilter(request, response);
     }
 }

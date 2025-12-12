@@ -28,9 +28,10 @@ public class JwtUtil {
         signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
+    // Generate token with userId as subject
     public String generateToken(Long userId, String role) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))          // store userId as subject
+                .setSubject(String.valueOf(userId))
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
@@ -57,23 +58,16 @@ public class JwtUtil {
         }
     }
 
-    public Long extractUserId(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
-        return Long.parseLong(claims.getSubject());   // subject = userId
+    // Return userId as Long
+    public Long getUserId(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody();
+        return Long.parseLong(claims.getSubject());
     }
 
-    public String extractRole(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-
+    public String getRole(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody();
         return claims.get("role", String.class);
     }
 }
