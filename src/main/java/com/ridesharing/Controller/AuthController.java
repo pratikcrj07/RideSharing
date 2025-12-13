@@ -5,7 +5,6 @@ import com.ridesharing.Entities.Admin;
 import com.ridesharing.Entities.Driver;
 import com.ridesharing.Entities.User;
 import com.ridesharing.Services.AuthService;
-import com.ridesharing.Util.GoogleTokenVerifier;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -59,39 +58,10 @@ public class AuthController {
 
 
     @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody @Valid GoogleAuthRequest request) {
-        try {
-            GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(request.getIdToken());
-
-            if (!payload.isEmailVerified()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", 401, "message", "Email not verified by Google"));
-            }
-
-            // Check if user exists or create new user
-            User user = UserService.findOrCreateUser(payload.getEmail(), payload.getName());
-
-            // Generate JWT tokens
-            String accessToken = jwtService.generateAccessToken(user);
-            String refreshToken = jwtService.generateRefreshToken(user);
-
-            Map<String, Object> response = Map.of(
-                    "accessToken", accessToken,
-                    "refreshToken", refreshToken,
-                    "tokenType", "Bearer"
-            );
-
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("status", 401, "message", ex.getMessage()));
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", 500, "message", "Something went wrong"));
-        }
+    public ResponseEntity<Map<String, Object>> googleLogin(@Valid @RequestBody GoogleAuthRequest req) {
+        AuthResponse auth = authService.googleLogin(req.getIdToken());
+        return wrapResponse(auth, "Google login successful");
     }
-
-
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> healthCheck() {
