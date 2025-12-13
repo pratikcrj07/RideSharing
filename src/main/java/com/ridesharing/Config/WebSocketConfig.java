@@ -11,7 +11,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // client connects to /ws endpnt
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws") // primary websocket endpoint
+        registry.addEndpoint("/ws") // primary websocket endp
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
