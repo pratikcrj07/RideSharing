@@ -39,7 +39,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Extract userId and role from token
+        // Extract userId and role from      token
         Long userId = jwtUtil.getUserId(token);
         String role = jwtUtil.getRole(token);
 
