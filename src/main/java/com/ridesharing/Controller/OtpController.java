@@ -42,7 +42,7 @@ public class OtpController {
                 return ResponseEntity.badRequest().body(new OtpResponse(false, "Invalid or expired OTP"));
             }
         } catch (Exception e) {
-            e.printStackTrace(); // log for debugging
+            e.printStackTrace(); // log
             return ResponseEntity.status(500)
                     .body(new OtpResponse(false, "Something went wrong"));
         }
