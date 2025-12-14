@@ -6,16 +6,14 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-
 @Entity
-@Table(name = "users", indexes = {@Index(columnList = "email")})
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "users", indexes = @Index(columnList = "email"))
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -26,23 +24,19 @@ public class User {
 
     private String phone;
 
-    @Column(nullable = true)
     private String password;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.ROLE_USER;
 
-    private boolean enabled = true;
-    @CreationTimestamp
-    private Instant createdAt = Instant.now();
-
+    private boolean enabled = false;
     private boolean emailVerified = false;
 
+    @Enumerated(EnumType.STRING)
+    private DriverStatus driverStatus = DriverStatus.NOT_APPLIED;
 
     private String provider = "LOCAL";
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "driver_status")
-    private DriverStatus driverStatus = DriverStatus.NOT_APPLIED;
-
+    @CreationTimestamp
+    private Instant createdAt;
 }
