@@ -14,41 +14,37 @@ public class OtpService {
     private final RedisTemplate<String, String> redisTemplate;
     private final SecureRandom random = new SecureRandom();
 
-    private static final Duration TTL = Duration.ofMinutes(5);           // OTP valid 5 min
-    private static final Duration RATE_LIMIT_TTL = Duration.ofMinutes(1); // Limit one OTP per minute
+    private static final Duration OTP_TTL = Duration.ofMinutes(5);
+    private static final Duration RATE_LIMIT_TTL = Duration.ofMinutes(1);
 
-    private String keyFor(String email) {
+    private String otpKey(String email) {
         return "OTP:" + email.toLowerCase();
     }
 
-    private String rateLimitKey(String email) {
+    private String rateKey(String email) {
         return "OTP_RATE:" + email.toLowerCase();
     }
 
-    // Generate OTP with rate limiting
     public String generateAndStoreOtp(String email) {
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(rateLimitKey(email)))) {
-            throw new RuntimeException("Please wait before requesting another OTP");
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(rateKey(email)))) {
+            throw new RuntimeException("OTP request too frequent");
         }
 
-        int code = 100000 + random.nextInt(900000);
-        String otp = String.valueOf(code);
+        String otp = String.valueOf(100000 + random.nextInt(900000));
 
-        redisTemplate.opsForValue().set(keyFor(email), otp, TTL);
-        redisTemplate.opsForValue().set(rateLimitKey(email), "1", RATE_LIMIT_TTL);
+        redisTemplate.opsForValue().set(otpKey(email), otp, OTP_TTL);
+        redisTemplate.opsForValue().set(rateKey(email), "1", RATE_LIMIT_TTL);
 
         return otp;
     }
 
     public boolean validateOtp(String email, String otp) {
-        String stored = redisTemplate.opsForValue().get(keyFor(email));
-        boolean valid = stored != null && stored.equals(otp);
-        if (valid) removeOtp(email); // auto-remove on successful validation
-        return valid;
+        String stored = redisTemplate.opsForValue().get(otpKey(email));
+        return stored != null && stored.equals(otp);
     }
 
     public void removeOtp(String email) {
-        redisTemplate.delete(keyFor(email));
-        redisTemplate.delete(rateLimitKey(email));
+        redisTemplate.delete(otpKey(email));
+        redisTemplate.delete(rateKey(email));
     }
 }
