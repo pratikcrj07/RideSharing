@@ -5,8 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.Instant;
-@Entity
+import java.time.Instant;@Entity
 @Table(name = "users", indexes = @Index(columnList = "email"))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
@@ -16,7 +15,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false, unique = true)
@@ -29,13 +27,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role = Role.ROLE_USER;
 
-    private boolean enabled = false;
-    private boolean emailVerified = false;
+    private boolean enabled;
+    private boolean emailVerified;
 
     @Enumerated(EnumType.STRING)
     private DriverStatus driverStatus = DriverStatus.NOT_APPLIED;
 
-    private String provider = "LOCAL";
+    private String provider;
 
     @CreationTimestamp
     private Instant createdAt;

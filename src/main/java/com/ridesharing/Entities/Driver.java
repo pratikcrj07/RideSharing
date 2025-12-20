@@ -15,7 +15,7 @@ public class Driver {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // link back to User
+    private Long userId;
 
     private String name;
     private String email;
