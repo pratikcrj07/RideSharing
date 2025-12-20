@@ -1,8 +1,7 @@
 package com.ridesharing.Controller;
 
-import com.ridesharing.DTOs.OtpRequest;
-import com.ridesharing.DTOs.OtpVerifyRequest;
-import com.ridesharing.DTOs.OtpResponse;
+import com.ridesharing.DTOs.*;
+import com.ridesharing.Services.AuthService;
 import com.ridesharing.Services.EmailService;
 import com.ridesharing.Services.OtpService;
 import jakarta.validation.Valid;
@@ -17,34 +16,17 @@ public class OtpController {
 
     private final OtpService otpService;
     private final EmailService emailService;
+    private final AuthService authService;
 
     @PostMapping("/send")
-    public ResponseEntity<OtpResponse> sendOtp(@Valid @RequestBody OtpRequest request) {
-        try {
-            String otp = otpService.generateAndStoreOtp(request.getEmail());
-            emailService.sendOtp(request.getEmail(), otp);
-            return ResponseEntity.ok(new OtpResponse(true, "OTP sent to email successfully"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new OtpResponse(false, e.getMessage()));
-        } catch (Exception e) {
-            e.printStackTrace(); // log
-            return ResponseEntity.status(500).body(new OtpResponse(false, "Something went wrong"));
-        }
+    public ResponseEntity<OtpResponse> sendOtp(@Valid @RequestBody OtpRequest req) {
+        String otp = otpService.generateAndStoreOtp(req.getEmail());
+        emailService.sendOtp(req.getEmail(), otp);
+        return ResponseEntity.ok(new OtpResponse(true, "OTP sent successfully"));
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<OtpResponse> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
-        try {
-            boolean valid = otpService.validateOtp(request.getEmail(), request.getOtp());
-            if (valid) {
-                return ResponseEntity.ok(new OtpResponse(true, "OTP verified successfully"));
-            } else {
-                return ResponseEntity.badRequest().body(new OtpResponse(false, "Invalid or expired OTP"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace(); // log
-            return ResponseEntity.status(500)
-                    .body(new OtpResponse(false, "Something went wrong"));
-        }
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> loginWithOtp(@Valid @RequestBody OtpVerifyRequest req) {
+        return ResponseEntity.ok(authService.loginWithOtp(req));
     }
 }
