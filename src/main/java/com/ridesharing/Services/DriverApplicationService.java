@@ -2,7 +2,7 @@ package com.ridesharing.Services;
 
 import com.ridesharing.Entities.*;
 import com.ridesharing.Exception.ApiException;
-import com.ridesharing.Repository.DriverApplicationRepo;
+import com.ridesharing.Repository.DriverApplicationRepository;
 import com.ridesharing.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -16,7 +16,7 @@ import java.time.Instant;
 public class DriverApplicationService {
 
     private final UserRepository userRepository;
-    private final DriverApplicationRepo applicationRepo;
+    private final DriverApplicationRepository applicationRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     // USER APPLIES

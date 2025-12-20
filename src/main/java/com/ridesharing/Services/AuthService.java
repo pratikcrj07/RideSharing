@@ -4,8 +4,6 @@ import com.ridesharing.DTOs.*;
 import com.ridesharing.Entities.*;
 import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.AdminRepository;
-import com.ridesharing.Repository.DriverApplicationRepo;
-import com.ridesharing.Repository.DriverApplicationRepo;
 import com.ridesharing.Repository.UserRepository;
 import com.ridesharing.Security.JwtUtil;
 import com.ridesharing.Util.GoogleTokenVerifier;
@@ -24,7 +22,6 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final AdminRepository adminRepository;
-    private final DriverApplicationRepo driverApplicationRepo;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
@@ -76,7 +73,7 @@ public class AuthService {
         return saved;
     }
 
-    // ---------------- LOGIN (USER + ADMIN ONLY) ----------------
+    // ---------------- LOGIN ----------------
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
@@ -97,57 +94,6 @@ public class AuthService {
         }
 
         throw new ApiException("Invalid email or password");
-    }
-
-    // ---------------- DRIVER APPLICATION ----------------
-    @Transactional
-    public DriverApplication applyForDriver(DriverApplyRequest req, Long userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException("User not found"));
-
-        if (user.getDriverStatus() != DriverStatus.NOT_APPLIED)
-            throw new ApiException("Already applied or approved");
-
-        DriverApplication app = DriverApplication.builder()
-                .userId(userId)
-                .licenseNumber(req.getLicenseNumber())
-                .vehicleNumber(req.getVehicleNumber())
-                .vehicleModel(req.getVehicleModel())
-                .status(DriverStatus.PENDING)
-                .appliedAt(Instant.now())
-                .build();
-
-        user.setDriverStatus(DriverStatus.PENDING);
-
-        driverApplicationRepo.save(app);
-        userRepository.save(user);
-
-        kafkaTemplate.send("auth-events", "DRIVER_APPLIED:" + userId);
-        return app;
-    }
-
-    // ---------------- ADMIN APPROVES DRIVER ----------------
-    @Transactional
-    public void approveDriver(Long applicationId, Long adminId) {
-
-        DriverApplication app = driverApplicationRepo.findById(applicationId)
-                .orElseThrow(() -> new ApiException("Application not found"));
-
-        User user = userRepository.findById(app.getUserId())
-                .orElseThrow(() -> new ApiException("User not found"));
-
-        app.setStatus(DriverStatus.APPROVED);
-        app.setReviewedByAdminId(adminId);
-        app.setReviewedAt(Instant.now());
-
-        user.setRole(Role.ROLE_DRIVER);
-        user.setDriverStatus(DriverStatus.APPROVED);
-
-        driverApplicationRepo.save(app);
-        userRepository.save(user);
-
-        kafkaTemplate.send("auth-events", "DRIVER_APPROVED:" + user.getId());
     }
 
     // ---------------- OTP LOGIN ----------------
@@ -193,7 +139,7 @@ public class AuthService {
         return generateTokens(user.getId(), user.getRole().name());
     }
 
-    // ---------------- TOKEN GENERATION ----------------
+    // ---------------- TOKEN ----------------
     private AuthResponse generateTokens(Long userId, String role) {
         String access = jwtUtil.generateToken(userId, role);
         String refresh = jwtUtil.generateRefreshToken(userId, role);
