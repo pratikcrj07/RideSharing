@@ -5,7 +5,7 @@ import com.ridesharing.Entities.*;
 import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.AdminRepository;
 import com.ridesharing.Repository.DriverApplicationRepo;
-import com.ridesharing.Repository.DriverApplicationRepository;
+import com.ridesharing.Repository.DriverApplicationRepo;
 import com.ridesharing.Repository.UserRepository;
 import com.ridesharing.Security.JwtUtil;
 import com.ridesharing.Util.GoogleTokenVerifier;

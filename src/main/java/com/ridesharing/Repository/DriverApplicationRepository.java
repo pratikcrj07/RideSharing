@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface DriverApplicationRepo  extends JpaRepository<DriverApplication, Long> {
-    Optional<DriverApplication> findByUserId(long userid);
+public interface DriverApplicationRepository
+        extends JpaRepository<DriverApplication, Long> {
 
+    Optional<DriverApplication> findByUserId(Long userId);
 }
