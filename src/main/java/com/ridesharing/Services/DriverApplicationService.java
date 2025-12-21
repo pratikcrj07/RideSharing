@@ -19,7 +19,7 @@ public class DriverApplicationService {
     private final DriverApplicationRepository applicationRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    // USER APPLIES
+
     @Transactional
     public String apply(Long userId, DriverApplication req) {
 
