@@ -26,7 +26,6 @@ public class OtpController {
         ));
     }
 
-    // ================= VERIFY OTP FOR REGISTRATION =================
     @PostMapping("/verify")
     public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpVerifyRequest req) {
         authService.verifyOtp(req);
