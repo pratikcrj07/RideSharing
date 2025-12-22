@@ -41,7 +41,7 @@ public class AuthService {
                 .password(passwordEncoder.encode(r.getPassword()))
                 .role(Role.ROLE_USER)
                 .provider("LOCAL")
-                .enabled(true)
+                .enabled(false)
                 .emailVerified(false)
                 .driverStatus(DriverStatus.NOT_APPLIED)
                 .build());
