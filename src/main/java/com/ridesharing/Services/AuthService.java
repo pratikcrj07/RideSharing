@@ -28,7 +28,7 @@ public class AuthService {
 
     // ================= USER REGISTER =================
     @Transactional
-    public User registerUser(RegisterRequest r) {
+    public void registerUser(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
 
         if (userRepository.existsByEmail(email))
@@ -46,9 +46,10 @@ public class AuthService {
                 .driverStatus(DriverStatus.NOT_APPLIED)
                 .build());
 
+        otpService.sendOtp(email);
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
-        return user;
     }
+
 
     // ================= ADMIN REGISTER =================
     @Transactional
