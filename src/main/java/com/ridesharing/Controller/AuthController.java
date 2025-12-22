@@ -33,10 +33,8 @@ public class AuthController {
     @PostMapping("/register/user")
     public ResponseEntity<Map<String, Object>> registerUser(@Valid @RequestBody RegisterRequest req) {
         authService.registerUser(req);
-        return wrapResponse(null, "OTP sent to email. Please verify.");
-    
-
-}
+        return wrapResponse(null, "OTP sent to email. Please verify to activate your account.");
+    }
 
 
 

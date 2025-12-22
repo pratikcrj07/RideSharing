@@ -2,31 +2,34 @@ package com.ridesharing.Controller;
 
 import com.ridesharing.DTOs.*;
 import com.ridesharing.Services.AuthService;
-import com.ridesharing.Services.EmailService;
-import com.ridesharing.Services.OtpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/otp")
 @RequiredArgsConstructor
 public class OtpController {
 
-    private final OtpService otpService;
-    private final EmailService emailService;
     private final AuthService authService;
 
-    @PostMapping("/send")
-    public ResponseEntity<OtpResponse> sendOtp(@Valid @RequestBody OtpRequest req) {
-        String otp = otpService.generateAndStoreOtp(req.getEmail());
-        emailService.sendOtp(req.getEmail(), otp);
-        return ResponseEntity.ok(new OtpResponse(true, "OTP sent successfully"));
+    private <T> ResponseEntity<Map<String, Object>> wrapResponse(T data, String message) {
+        return ResponseEntity.ok(Map.of(
+                "timestamp", Instant.now(),
+                "status", 200,
+                "message", message,
+                "data", data
+        ));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<AuthResponse> loginWithOtp(@Valid @RequestBody OtpVerifyRequest req) {
-        return ResponseEntity.ok(authService.loginWithOtp(req));
+    // ================= VERIFY OTP FOR REGISTRATION =================
+    @PostMapping("/verify")
+    public ResponseEntity<Map<String, Object>> verifyOtp(@Valid @RequestBody OtpVerifyRequest req) {
+        authService.verifyOtp(req);
+        return wrapResponse(null, "Account registered successfully");
     }
 }

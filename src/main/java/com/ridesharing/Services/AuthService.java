@@ -24,21 +24,23 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
+    private final EmailService emailService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     // ================= USER REGISTER =================
     @Transactional
-    public void registerUser(RegisterRequest r) {
-        String email = r.getEmail().toLowerCase();
+    public void registerUser(RegisterRequest req) {
+        String email = req.getEmail().toLowerCase();
 
         if (userRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
+        // Save user as disabled first
         User user = userRepository.save(User.builder()
-                .name(r.getName())
+                .name(req.getName())
                 .email(email)
-                .phone(r.getPhone())
-                .password(passwordEncoder.encode(r.getPassword()))
+                .phone(req.getPhone())
+                .password(passwordEncoder.encode(req.getPassword()))
                 .role(Role.ROLE_USER)
                 .provider("LOCAL")
                 .enabled(false)
@@ -46,11 +48,56 @@ public class AuthService {
                 .driverStatus(DriverStatus.NOT_APPLIED)
                 .build());
 
+        // Generate OTP and send email
         String otp = otpService.generateAndStoreOtp(email);
+        emailService.sendOtp(email, otp);
 
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
     }
 
+    // ================= OTP VERIFY =================
+    @Transactional
+    public void verifyOtp(OtpVerifyRequest req) {
+        String email = req.getEmail().toLowerCase();
+
+        if (!otpService.validateOtp(email, req.getOtp()))
+            throw new ApiException("Invalid or expired OTP");
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        user.setEnabled(true);
+        user.setEmailVerified(true);
+
+        otpService.removeOtp(email);
+    }
+
+    // ================= LOGIN =================
+    public AuthResponse login(LoginRequest req) {
+        String email = req.getEmail().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElse(null);
+
+        if (user != null) {
+            if (!user.isEnabled())
+                throw new ApiException("Email not verified");
+
+            if (!passwordEncoder.matches(req.getPassword(), user.getPassword()))
+                throw new ApiException("Invalid credentials");
+
+            return generateTokens(user.getId(), user.getRole().name());
+        }
+
+        // Check admin login
+        Admin admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("Invalid credentials"));
+
+        if (!passwordEncoder.matches(req.getPassword(), admin.getPassword()))
+            throw new ApiException("Invalid credentials");
+
+        return generateTokens(admin.getId(), admin.getRole().name());
+    }
 
     // ================= ADMIN REGISTER =================
     @Transactional
@@ -72,43 +119,6 @@ public class AuthService {
         return admin;
     }
 
-    // ================= PASSWORD LOGIN =================
-    public AuthResponse login(LoginRequest req) {
-        String email = req.getEmail().toLowerCase();
-
-        return userRepository.findByEmail(email)
-                .filter(u -> passwordEncoder.matches(req.getPassword(), u.getPassword()))
-                .map(u -> generateTokens(u.getId(), u.getRole().name()))
-                .orElseGet(() ->
-                        adminRepository.findByEmail(email)
-                                .filter(a -> passwordEncoder.matches(req.getPassword(), a.getPassword()))
-                                .map(a -> generateTokens(a.getId(), a.getRole().name()))
-                                .orElseThrow(() -> new ApiException("Invalid credentials"))
-                );
-    }
-
-    // ================= OTP LOGIN =================
-    public AuthResponse loginWithOtp(OtpVerifyRequest req) {
-        String email = req.getEmail().toLowerCase();
-
-        if (!otpService.validateOtp(email, req.getOtp()))
-            throw new ApiException("Invalid or expired OTP");
-
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .email(email)
-                        .name("OTP_USER")
-                        .provider("OTP")
-                        .role(Role.ROLE_USER)
-                        .enabled(true)
-                        .emailVerified(true)
-                        .driverStatus(DriverStatus.NOT_APPLIED)
-                        .build()));
-
-        otpService.removeOtp(email);
-        return generateTokens(user.getId(), user.getRole().name());
-    }
-
     // ================= GOOGLE LOGIN =================
     public AuthResponse googleLogin(String idToken) {
         GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(idToken);
@@ -128,6 +138,7 @@ public class AuthService {
         return generateTokens(user.getId(), user.getRole().name());
     }
 
+    // ================= GENERATE TOKENS =================
     private AuthResponse generateTokens(Long id, String role) {
         kafkaTemplate.send("auth-events", "LOGIN:" + id);
         return new AuthResponse(
@@ -135,21 +146,4 @@ public class AuthService {
                 jwtUtil.generateRefreshToken(id, role)
         );
     }
-    // ================= OTP VERIFY =================
-    @Transactional
-    public void verifyOtp(OtpVerifyRequest req) {
-        String email = req.getEmail().toLowerCase();
-
-        if (!otpService.validateOtp(email, req.getOtp()))
-            throw new ApiException("Invalid or expired OTP");
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApiException("User not found"));
-
-        user.setEmailVerified(true);
-        user.setEnabled(true);
-
-        otpService.removeOtp(email);
-    }
-
 }
