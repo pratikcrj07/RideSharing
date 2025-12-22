@@ -27,7 +27,6 @@ public class AuthService {
     private final EmailService emailService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    // ================= USER REGISTER =================
     @Transactional
     public void registerUser(RegisterRequest req) {
         String email = req.getEmail().toLowerCase();
