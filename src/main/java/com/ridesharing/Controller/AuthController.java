@@ -32,9 +32,11 @@ public class AuthController {
 
     @PostMapping("/register/user")
     public ResponseEntity<Map<String, Object>> registerUser(@Valid @RequestBody RegisterRequest req) {
-        User user = authService.registerUser(req);
-        return wrapResponse(user, "User registered successfully");
-    }
+        authService.registerUser(req);
+        return wrapResponse(null, "OTP sent to email. Please verify.");
+    
+
+}
 
 
 

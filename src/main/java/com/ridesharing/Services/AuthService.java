@@ -46,7 +46,8 @@ public class AuthService {
                 .driverStatus(DriverStatus.NOT_APPLIED)
                 .build());
 
-        otpService.sendOtp(email);
+        String otp = otpService.generateAndStoreOtp(email);
+
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
     }
 
@@ -134,4 +135,21 @@ public class AuthService {
                 jwtUtil.generateRefreshToken(id, role)
         );
     }
+    // ================= OTP VERIFY =================
+    @Transactional
+    public void verifyOtp(OtpVerifyRequest req) {
+        String email = req.getEmail().toLowerCase();
+
+        if (!otpService.validateOtp(email, req.getOtp()))
+            throw new ApiException("Invalid or expired OTP");
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        user.setEmailVerified(true);
+        user.setEnabled(true);
+
+        otpService.removeOtp(email);
+    }
+
 }
