@@ -34,7 +34,7 @@ public class AuthService {
         if (userRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
-        // Save user as disabled first
+
         User user = userRepository.save(User.builder()
                 .name(req.getName())
                 .email(email)
