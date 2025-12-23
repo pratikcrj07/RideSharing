@@ -47,14 +47,15 @@ public class AuthService {
                 .driverStatus(DriverStatus.NOT_APPLIED)
                 .build());
 
-        // Generate OTP and send email
+
         String otp = otpService.generateAndStoreOtp(email);
+
         emailService.sendOtp(email, otp);
 
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
     }
 
-    // ================= OTP VERIFY =================
+
     @Transactional
     public void verifyOtp(OtpVerifyRequest req) {
         String email = req.getEmail().toLowerCase();
@@ -72,7 +73,6 @@ public class AuthService {
         otpService.removeOtp(email);
     }
 
-    // ================= LOGIN =================
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
@@ -89,7 +89,7 @@ public class AuthService {
             return generateTokens(user.getId(), user.getRole().name());
         }
 
-        // Check admin login
+
         Admin admin = adminRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException("Invalid credentials"));
 
@@ -99,7 +99,6 @@ public class AuthService {
         return generateTokens(admin.getId(), admin.getRole().name());
     }
 
-    // ================= ADMIN REGISTER =================
     @Transactional
     public Admin registerAdmin(RegisterRequest r) {
         String email = r.getEmail().toLowerCase();
@@ -119,7 +118,6 @@ public class AuthService {
         return admin;
     }
 
-    // ================= GOOGLE LOGIN =================
     public AuthResponse googleLogin(String idToken) {
         GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(idToken);
         String email = payload.getEmail().toLowerCase();
@@ -138,7 +136,6 @@ public class AuthService {
         return generateTokens(user.getId(), user.getRole().name());
     }
 
-    // ================= GENERATE TOKENS =================
     private AuthResponse generateTokens(Long id, String role) {
         kafkaTemplate.send("auth-events", "LOGIN:" + id);
         return new AuthResponse(
