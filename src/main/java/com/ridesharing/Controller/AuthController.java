@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,13 +22,17 @@ public class AuthController {
 
     private final AuthService authService;
 
+
+
     private <T> ResponseEntity<Map<String, Object>> wrapResponse(T data, String message) {
-        return ResponseEntity.ok(Map.of(
-                "timestamp", Instant.now(),
-                "status", HttpStatus.OK.value(),
-                "message", message,
-                "data", data
-        ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", Instant.now());
+        response.put("status", HttpStatus.OK.value());
+        response.put("message", message);
+        response.put("data", data); // null is SAFE here
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/register/user")
