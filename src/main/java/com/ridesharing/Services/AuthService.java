@@ -68,6 +68,7 @@ public class AuthService {
         user.setEnabled(true);
         user.setEmailVerified(true);
 
+        userRepository.save(user);
         otpService.removeOtp(email);
     }
 
