@@ -2,8 +2,7 @@ package com.ridesharing.Controller;
 
 import com.ridesharing.DTOs.*;
 import com.ridesharing.Entities.Admin;
-import com.ridesharing.Entities.Driver;
-import com.ridesharing.Entities.User;
+
 import com.ridesharing.Services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
