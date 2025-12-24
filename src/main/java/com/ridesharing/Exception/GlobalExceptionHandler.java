@@ -72,13 +72,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
-    //  FALLBACK (REAL 500 ONLY)
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnhandledException(
             Exception ex,
             HttpServletRequest request
     ) {
-        ex.printStackTrace(); // MUST stay in dev
+        ex.printStackTrace(); // for dev
 
         ApiErrorResponse response = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
