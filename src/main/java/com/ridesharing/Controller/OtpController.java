@@ -4,10 +4,12 @@ import com.ridesharing.DTOs.*;
 import com.ridesharing.Services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,12 +20,14 @@ public class OtpController {
     private final AuthService authService;
 
     private <T> ResponseEntity<Map<String, Object>> wrapResponse(T data, String message) {
-        return ResponseEntity.ok(Map.of(
-                "timestamp", Instant.now(),
-                "status", 200,
-                "message", message,
-                "data", data
-        ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", Instant.now());
+        response.put("status", HttpStatus.OK.value());
+        response.put("message", message);
+        response.put("data", data); // null is SAFE here
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify")
