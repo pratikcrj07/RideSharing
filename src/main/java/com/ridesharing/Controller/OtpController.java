@@ -25,7 +25,7 @@ public class OtpController {
         response.put("timestamp", Instant.now());
         response.put("status", HttpStatus.OK.value());
         response.put("message", message);
-        response.put("data", data); // null is SAFE here
+        response.put("data", data);
 
         return ResponseEntity.ok(response);
     }
