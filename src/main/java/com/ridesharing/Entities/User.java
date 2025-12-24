@@ -1,6 +1,5 @@
 package com.ridesharing.Entities;
 
-import com.ridesharing.Entities.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
