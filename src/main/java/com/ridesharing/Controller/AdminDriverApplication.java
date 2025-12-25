@@ -24,7 +24,6 @@ public class AdminDriverApplication {
         return ResponseEntity.ok(driverService.approve(id, adminId));
     }
 
-    // -------- REJECT DRIVER --------
     @PutMapping("/reject/{id}")
     public ResponseEntity<String> reject(
             @PathVariable Long id,
