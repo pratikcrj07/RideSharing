@@ -16,7 +16,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS();
     }
 
-    // message broker for routing messages (simple in-memory broker)
+    // message broker for routing message (simple in-memory broker)
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/queue"); // topics for broadcasts
