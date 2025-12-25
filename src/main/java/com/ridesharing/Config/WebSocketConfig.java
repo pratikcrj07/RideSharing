@@ -8,7 +8,7 @@ import org.springframework.web.socket.config.annotation.*;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    // client connects to /ws endpnt
+    // client connect to /ws endpnt
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws") // primary websocket endp
