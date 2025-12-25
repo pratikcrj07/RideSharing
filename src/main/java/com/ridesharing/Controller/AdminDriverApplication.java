@@ -14,7 +14,7 @@ public class AdminDriverApplication {
     private final DriverApplicationService driverService;
     private final JwtUtil jwtUtil;
 
-    // -------- APPROVE DRIVER --------
+
     @PutMapping("/approve/{id}")
     public ResponseEntity<String> approve(
             @PathVariable Long id,
