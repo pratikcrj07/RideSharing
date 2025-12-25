@@ -22,4 +22,5 @@ public class DriverController {
 
         return ResponseEntity.ok(driverService.apply(userId, req));
     }
+
 }
