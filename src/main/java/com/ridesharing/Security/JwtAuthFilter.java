@@ -39,12 +39,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Extract userId and role from      token
-        Long userId = jwtUtil.getUserId(token);
+        // Principal is email now
+        String email = jwtUtil.getEmail(token);
         String role = jwtUtil.getRole(token);
 
-        // Set authentication in Spring Security context
-        var auth = new UsernamePasswordAuthenticationToken(userId, null,
+        var auth = new UsernamePasswordAuthenticationToken(email, null,
                 List.of(new SimpleGrantedAuthority(role)));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
