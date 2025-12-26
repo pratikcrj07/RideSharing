@@ -17,9 +17,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<User> me(Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
-        String principal = (String) auth.getPrincipal();
-        return userService.findByEmail(principal)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Long userId =(Long) auth.getPrincipal();
+                    .orElse(ResponseEntity.notFound().build());
     }
 }
