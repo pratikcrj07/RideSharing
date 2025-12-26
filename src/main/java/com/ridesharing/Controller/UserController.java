@@ -12,49 +12,49 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    // If you have DriverRepository or AdminRepository, inject them here:
-    private final DriverRepository driverRepository;
-    private final AdminRepository adminRepository;
+    private final DriverRepository driverRepository; // inject if exists
+    private final AdminRepository adminRepository;   // inject if exists
 
     @GetMapping("/me")
     public ResponseEntity<?> me(Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
 
-        String principal = auth.getPrincipal().toString();  // can be ID or email
+        String principal = auth.getPrincipal().toString();
 
-        // Try parsing as Long (old logic)
+        // 1️⃣ Try old numeric ID flow first
+        User userById = null;
         try {
             Long id = Long.parseLong(principal);
-            Optional<User> u = userService.findByIdOptional(id);
-            if (u.isPresent()) {
-                u.get().setPassword(null);
-                return ResponseEntity.ok(u.get());
+            userById = userService.findById(id);
+            if (userById != null) {
+                userById.setPassword(null);
+                return ResponseEntity.ok(userById);
             }
-        } catch (NumberFormatException e) {
-            // Not a number, fallback to email
+        } catch (NumberFormatException ignored) {
+            // principal is not a number → fallback to email
         }
 
-        // Fallback to email search across all tables
+        // 2️⃣ Fallback: treat principal as email
         String email = principal;
-        Optional<User> user = userService.findByEmail(email);
-        if (user.isPresent()) {
-            user.get().setPassword(null);
-            return ResponseEntity.ok(user.get());
+
+        Optional<User> userOpt = userService.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            u.setPassword(null);
+            return ResponseEntity.ok(u);
         }
 
-        Optional<Driver> driver = driverRepository.findByEmail(email);
-        if (driver.isPresent()) return ResponseEntity.ok(driver.get());
+        Optional<Driver> driverOpt = driverRepository.findByEmail(email);
+        if (driverOpt.isPresent()) return ResponseEntity.ok(driverOpt.get());
 
-        Optional<Admin> admin = adminRepository.findByEmail(email);
-        if (admin.isPresent()) return ResponseEntity.ok(admin.get());
+        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
+        if (adminOpt.isPresent()) return ResponseEntity.ok(adminOpt.get());
 
         return ResponseEntity.notFound().build();
     }
