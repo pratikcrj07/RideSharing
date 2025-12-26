@@ -28,10 +28,11 @@ public class JwtUtil {
         signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    // Generate token with userId as subject
-    public String generateToken(Long userId, String role) {
+    // Generate token with email as subject
+    public String generateToken(Long userId, String email, String role) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .setSubject(email)               // email is principal
+                .claim("userId", userId)         // store numeric id as claim
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
@@ -39,9 +40,10 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId, String role) {
+    public String generateRefreshToken(Long userId, String email, String role) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .setSubject(email)
+                .claim("userId", userId)
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtRefreshExpirationMs))
@@ -58,11 +60,16 @@ public class JwtUtil {
         }
     }
 
-    // Return userId as Long
+    public String getEmail(String token) {
+        Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build()
+                .parseClaimsJws(token).getBody();
+        return claims.getSubject();
+    }
+
     public Long getUserId(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(signingKey).build()
                 .parseClaimsJws(token).getBody();
-        return Long.parseLong(claims.getSubject());
+        return claims.get("userId", Long.class);
     }
 
     public String getRole(String token) {
