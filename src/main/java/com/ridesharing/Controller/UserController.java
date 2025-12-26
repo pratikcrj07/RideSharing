@@ -1,5 +1,7 @@
 package com.ridesharing.Controller;
 
+import com.ridesharing.DTOs.ProfileDTO;
+import com.ridesharing.DTOs.ProfileDtos;
 import com.ridesharing.Entities.Admin;
 import com.ridesharing.Entities.Driver;
 import com.ridesharing.Entities.User;
@@ -28,30 +30,41 @@ public class UserController {
 
         String principal = auth.getPrincipal().toString();
 
-        // 1️⃣ Try as User
+        // 1️⃣ Check User
         Optional<User> userOpt = userService.findByEmail(principal);
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            u.setPassword(null);  // hide password
-            return ResponseEntity.ok(u);
+            ProfileDTO dto = mapToProfileDTO(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getEnabled(), u.getDriverStatus());
+            return ResponseEntity.ok(dto);
         }
 
-        // 2️⃣ Try as Driver
+        // 2️⃣ Check Driver
         Optional<Driver> driverOpt = driverRepository.findByEmail(principal);
         if (driverOpt.isPresent()) {
             Driver d = driverOpt.get();
-            d.setPassword(null);
-            return ResponseEntity.ok(d);
+            ProfileDtos dto = mapToProfileDTO(d.getId(), d.getName(), d.getEmail(), d.getRole(), d.getEnabled(), d.getDriverStatus());
+            return ResponseEntity.ok(dto);
         }
 
-        // 3️⃣ Try as Admin
+        // 3️⃣ Check Admin
         Optional<Admin> adminOpt = adminRepository.findByEmail(principal);
         if (adminOpt.isPresent()) {
             Admin a = adminOpt.get();
-            a.setPassword(null);
-            return ResponseEntity.ok(a);
+            ProfileDtos dto = mapToProfileDTO(a.getId(), a.getName(), a.getEmail(), a.getRole(), a.getEnabled(), null); // driverStatus N/A
+            return ResponseEntity.ok(dto);
         }
 
         return ResponseEntity.notFound().build();
+    }
+
+    private ProfileDtos mapToProfileDTO(Long id, String name, String email, String role, Boolean enabled, String driverStatus) {
+        ProfileDtos dto = new ProfileDtos();
+        dto.setId(id);
+        dto.setName(name);
+        dto.setEmail(email);
+        dto.setRole(role);
+        dto.setEnabled(enabled);
+        dto.setDriverStatus(driverStatus);
+        return dto;
     }
 }
