@@ -23,8 +23,8 @@ public class User {
 
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role = Role.ROLE_USER;
+//    @Enumerated(EnumType.STRING)
+//    private Role role = Role.ROLE_USER;
 
     private boolean enabled;
     private boolean emailVerified;
@@ -36,4 +36,7 @@ public class User {
 
     @CreationTimestamp
     private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    private Role Role;
 }
