@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
@@ -16,8 +15,13 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<User> me(Authentication auth) {
-        if (auth == null) return ResponseEntity.status(401).build();
-        Long userId =(Long) auth.getPrincipal();
-                    .orElse(ResponseEntity.notFound().build());
+
+        if (auth == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(userService.findById(userId));
     }
 }
+

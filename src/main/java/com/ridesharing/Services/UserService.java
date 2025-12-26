@@ -16,8 +16,9 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public User findById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     public User save(User u) {
