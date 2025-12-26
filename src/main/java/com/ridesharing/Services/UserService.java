@@ -10,15 +10,16 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
+
     public Optional<User> findByIdOptional(Long id) {
         return userRepository.findById(id);
     }
-
 
     public User findById(Long id) {
         return userRepository.findById(id)
