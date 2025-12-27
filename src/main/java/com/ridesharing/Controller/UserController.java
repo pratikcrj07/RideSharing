@@ -1,6 +1,5 @@
 package com.ridesharing.Controller;
 
-import com.ridesharing.DTOs.ProfileDTO;
 import com.ridesharing.DTOs.ProfileDtos;
 import com.ridesharing.Entities.Admin;
 import com.ridesharing.Entities.Driver;
@@ -34,7 +33,7 @@ public class UserController {
         Optional<User> userOpt = userService.findByEmail(principal);
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            ProfileDTO dto = mapToProfileDTO(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getEnabled(), u.getDriverStatus());
+            ProfileDtos dto = mapToProfileDTO(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getEnabled(), u.getDriverStatus());
             return ResponseEntity.ok(dto);
         }
 
