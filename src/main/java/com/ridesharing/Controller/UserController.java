@@ -27,43 +27,50 @@ public class UserController {
     public ResponseEntity<?> me(Authentication auth) {
         if (auth == null) return ResponseEntity.status(401).build();
 
-        String principal = auth.getPrincipal().toString();
+        String email = auth.getPrincipal().toString();
 
-        // 1️⃣ Check User
-        Optional<User> userOpt = userService.findByEmail(principal);
+        // 1️⃣ USER
+        Optional<User> userOpt = userService.findByEmail(email);
         if (userOpt.isPresent()) {
             User u = userOpt.get();
-            ProfileDtos dto = mapToProfileDTO(u.getId(), u.getName(), u.getEmail(), u.getRole(), u.getEnabled(), u.getDriverStatus());
+            ProfileDtos dto = new ProfileDtos();
+            dto.setId(u.getId());
+            dto.setName(u.getName());
+            dto.setEmail(u.getEmail());
+            dto.setRole(u.getRole());
+            dto.setEnabled(u.getEnabled());
+            dto.setDriverStatus(u.getDriverStatus());
             return ResponseEntity.ok(dto);
         }
 
-        // 2️⃣ Check Driver
-        Optional<Driver> driverOpt = driverRepository.findByEmail(principal);
+        // 2️⃣ DRIVER
+        Optional<Driver> driverOpt = driverRepository.findByEmail(email);
         if (driverOpt.isPresent()) {
             Driver d = driverOpt.get();
-            ProfileDtos dto = mapToProfileDTO(d.getId(), d.getName(), d.getEmail(), d.getRole(), d.getEnabled(), d.getDriverStatus());
+            ProfileDtos dto = new ProfileDtos();
+            dto.setId(d.getId());
+            dto.setName(d.getName());
+            dto.setEmail(d.getEmail());
+            dto.setRole("ROLE_DRIVER");
+            dto.setEnabled(d.isApproved());   // adjust to your actual field
+            dto.setDriverStatus(d.getStatus());
             return ResponseEntity.ok(dto);
         }
 
-        // 3️⃣ Check Admin
-        Optional<Admin> adminOpt = adminRepository.findByEmail(principal);
+        // 3️⃣ ADMIN
+        Optional<Admin> adminOpt = adminRepository.findByEmail(email);
         if (adminOpt.isPresent()) {
             Admin a = adminOpt.get();
-            ProfileDtos dto = mapToProfileDTO(a.getId(), a.getName(), a.getEmail(), a.getRole(), a.getEnabled(), null); // driverStatus N/A
+            ProfileDtos dto = new ProfileDtos();
+            dto.setId(a.getId());
+            dto.setName(a.getName());
+            dto.setEmail(a.getEmail());
+            dto.setRole("ROLE_ADMIN");
+            dto.setEnabled(true);             // admins are implicitly enabled
+            dto.setDriverStatus(null);
             return ResponseEntity.ok(dto);
         }
 
         return ResponseEntity.notFound().build();
-    }
-
-    private ProfileDtos mapToProfileDTO(Long id, String name, String email, String role, Boolean enabled, String driverStatus) {
-        ProfileDtos dto = new ProfileDtos();
-        dto.setId(id);
-        dto.setName(name);
-        dto.setEmail(email);
-        dto.setRole(role);
-        dto.setEnabled(enabled);
-        dto.setDriverStatus(driverStatus);
-        return dto;
     }
 }
