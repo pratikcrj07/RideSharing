@@ -29,45 +29,56 @@ public class UserController {
 
         String email = auth.getPrincipal().toString();
 
-        // 1️⃣ USER
+        // ========= USER =========
         Optional<User> userOpt = userService.findByEmail(email);
         if (userOpt.isPresent()) {
             User u = userOpt.get();
+
             ProfileDtos dto = new ProfileDtos();
             dto.setId(u.getId());
             dto.setName(u.getName());
             dto.setEmail(u.getEmail());
-            dto.setRole(u.getRole());
-            dto.setEnabled(u.getEnabled());
-            dto.setDriverStatus(u.getDriverStatus());
+            dto.setRole(u.getRole().name());              // ENUM → String
+            dto.setEnabled(u.isEnabled());                // boolean getter
+            dto.setDriverStatus(
+                    u.getDriverStatus() != null
+                            ? u.getDriverStatus().name()
+                            : null
+            );
+
             return ResponseEntity.ok(dto);
         }
-
-        // 2️⃣ DRIVER
+// ========= DRIVER =========
         Optional<Driver> driverOpt = driverRepository.findByEmail(email);
         if (driverOpt.isPresent()) {
             Driver d = driverOpt.get();
+
             ProfileDtos dto = new ProfileDtos();
             dto.setId(d.getId());
             dto.setName(d.getName());
             dto.setEmail(d.getEmail());
             dto.setRole("ROLE_DRIVER");
-            dto.setEnabled(d.isApproved());   // adjust to your actual field
-            dto.setDriverStatus(d.getStatus());
+            dto.setEnabled(d.isApproved());
+
+            // driverStatus does NOT belong to Driver entity
+            dto.setDriverStatus(null);
+
             return ResponseEntity.ok(dto);
         }
 
-        // 3️⃣ ADMIN
+        // ========= ADMIN =========
         Optional<Admin> adminOpt = adminRepository.findByEmail(email);
         if (adminOpt.isPresent()) {
             Admin a = adminOpt.get();
+
             ProfileDtos dto = new ProfileDtos();
             dto.setId(a.getId());
             dto.setName(a.getName());
             dto.setEmail(a.getEmail());
             dto.setRole("ROLE_ADMIN");
-            dto.setEnabled(true);             // admins are implicitly enabled
+            dto.setEnabled(true);
             dto.setDriverStatus(null);
+
             return ResponseEntity.ok(dto);
         }
 
