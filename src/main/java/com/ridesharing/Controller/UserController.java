@@ -29,7 +29,6 @@ public class UserController {
 
         String email = auth.getPrincipal().toString();
 
-        // ========= USER =========
         Optional<User> userOpt = userService.findByEmail(email);
         if (userOpt.isPresent()) {
             User u = userOpt.get();
@@ -48,7 +47,6 @@ public class UserController {
 
             return ResponseEntity.ok(dto);
         }
-// ========= DRIVER =========
         Optional<Driver> driverOpt = driverRepository.findByEmail(email);
         if (driverOpt.isPresent()) {
             Driver d = driverOpt.get();
@@ -60,13 +58,11 @@ public class UserController {
             dto.setRole("ROLE_DRIVER");
             dto.setEnabled(d.isApproved());
 
-            // driverStatus does NOT belong to Driver entity
             dto.setDriverStatus(null);
 
             return ResponseEntity.ok(dto);
         }
 
-        // ========= ADMIN =========
         Optional<Admin> adminOpt = adminRepository.findByEmail(email);
         if (adminOpt.isPresent()) {
             Admin a = adminOpt.get();
