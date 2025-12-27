@@ -27,6 +27,8 @@ public class AuthService {
     private final EmailService emailService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
+
+
     @Transactional
     public void registerUser(RegisterRequest req) {
         String email = req.getEmail().toLowerCase();
@@ -34,26 +36,26 @@ public class AuthService {
         if (userRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
-
-        User user = userRepository.save(User.builder()
-                .name(req.getName())
-                .email(email)
-                .phone(req.getPhone())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .role(Role.ROLE_USER)
-                .provider("LOCAL")
-                .enabled(false)
-                .emailVerified(false)
-                .driverStatus(DriverStatus.NOT_APPLIED)
-                .build());
-
+        User user = userRepository.save(
+                User.builder()
+                        .name(req.getName())
+                        .email(email)
+                        .phone(req.getPhone())
+                        .password(passwordEncoder.encode(req.getPassword()))
+                        .role(Role.ROLE_USER)
+                        .provider("LOCAL")
+                        .enabled(false)
+                        .emailVerified(false)
+                        .driverStatus(DriverStatus.NOT_APPLIED)
+                        .build()
+        );
 
         String otp = otpService.generateAndStoreOtp(email);
-
         emailService.sendOtp(email, otp);
 
         kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
     }
+
 
 
     @Transactional
@@ -73,11 +75,13 @@ public class AuthService {
         otpService.removeOtp(email);
     }
 
+
+
     public AuthResponse login(LoginRequest req) {
         String email = req.getEmail().toLowerCase();
 
-        User user = userRepository.findByEmail(email)
-                .orElse(null);
+
+        User user = userRepository.findByEmail(email).orElse(null);
 
         if (user != null) {
             if (!user.isEnabled())
@@ -86,7 +90,11 @@ public class AuthService {
             if (!passwordEncoder.matches(req.getPassword(), user.getPassword()))
                 throw new ApiException("Invalid credentials");
 
-            return generateTokens(user.getId(), user.getRole().name());
+            return generateTokens(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getRole().name()
+            );
         }
 
 
@@ -96,51 +104,71 @@ public class AuthService {
         if (!passwordEncoder.matches(req.getPassword(), admin.getPassword()))
             throw new ApiException("Invalid credentials");
 
-        return generateTokens(admin.getId(), admin.getRole().name());
+        return generateTokens(
+                admin.getId(),
+                admin.getEmail(),
+                admin.getRole().name()
+        );
     }
 
+
+
     @Transactional
-    public Admin registerAdmin(RegisterRequest r) {
-        String email = r.getEmail().toLowerCase();
+    public Admin registerAdmin(RegisterRequest req) {
+        String email = req.getEmail().toLowerCase();
 
         if (adminRepository.existsByEmail(email))
             throw new ApiException("Email already used");
 
-        Admin admin = adminRepository.save(Admin.builder()
-                .name(r.getName())
-                .email(email)
-                .password(passwordEncoder.encode(r.getPassword()))
-                .role(Role.ROLE_ADMIN)
-                .createdAt(Instant.now())
-                .build());
+        Admin admin = adminRepository.save(
+                Admin.builder()
+                        .name(req.getName())
+                        .email(email)
+                        .password(passwordEncoder.encode(req.getPassword()))
+                        .role(Role.ROLE_ADMIN)
+                        .createdAt(Instant.now())
+                        .build()
+        );
 
         kafkaTemplate.send("auth-events", "ADMIN_REGISTERED:" + admin.getId());
         return admin;
     }
+
 
     public AuthResponse googleLogin(String idToken) {
         GoogleTokenVerifier.Payload payload = GoogleTokenVerifier.verify(idToken);
         String email = payload.getEmail().toLowerCase();
 
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(User.builder()
-                        .name(payload.getName())
-                        .email(email)
-                        .provider("GOOGLE")
-                        .emailVerified(true)
-                        .enabled(true)
-                        .role(Role.ROLE_USER)
-                        .driverStatus(DriverStatus.NOT_APPLIED)
-                        .build()));
+                .orElseGet(() ->
+                        userRepository.save(
+                                User.builder()
+                                        .name(payload.getName())
+                                        .email(email)
+                                        .provider("GOOGLE")
+                                        .emailVerified(true)
+                                        .enabled(true)
+                                        .role(Role.ROLE_USER)
+                                        .driverStatus(DriverStatus.NOT_APPLIED)
+                                        .build()
+                        )
+                );
 
-        return generateTokens(user.getId(), user.getRole().name());
+        return generateTokens(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
     }
 
-    private AuthResponse generateTokens(Long id, String role) {
+
+
+    private AuthResponse generateTokens(Long id, String email, String role) {
         kafkaTemplate.send("auth-events", "LOGIN:" + id);
+
         return new AuthResponse(
-                jwtUtil.generateToken(id, role),
-                jwtUtil.generateRefreshToken(id, role)
+                jwtUtil.generateToken(id, email, role),
+                jwtUtil.generateRefreshToken(id, email, role)
         );
     }
 }
