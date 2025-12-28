@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class DriverApplicationService {
     private final DriverApplicationRepository applicationRepo;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-
+    // ================= USER APPLIES =================
     @Transactional
     public String apply(Long userId, DriverApplication req) {
 
@@ -48,7 +49,13 @@ public class DriverApplicationService {
         return "Driver application submitted successfully";
     }
 
-    // ADMIN APPROVES
+    // ================= ADMIN: GET ALL PENDING =================
+    @Transactional(readOnly = true)
+    public List<DriverApplication> getPendingApplications() {
+        return applicationRepo.findByStatus(DriverStatus.PENDING);
+    }
+
+    // ================= ADMIN APPROVES =================
     @Transactional
     public String approve(Long applicationId, Long adminId) {
 
@@ -72,7 +79,7 @@ public class DriverApplicationService {
         return "Driver approved successfully";
     }
 
-    // ADMIN REJECTS
+    // ================= ADMIN REJECTS =================
     @Transactional
     public String reject(Long applicationId, String reason, Long adminId) {
 
