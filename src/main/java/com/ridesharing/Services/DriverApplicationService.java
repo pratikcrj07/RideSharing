@@ -19,13 +19,12 @@ public class DriverApplicationService {
 
     private final UserRepository userRepository;
     private final DriverApplicationRepository applicationRepo;
-    private final DriverRepository driverRepository; // added
+    private final DriverRepository driverRepository;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    // ================= USER APPLIES =================
+    // USER APPLIES
     @Transactional
     public String apply(Long userId, DriverApplication req) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("User not found"));
 
@@ -51,12 +50,13 @@ public class DriverApplicationService {
         return "Driver application submitted successfully";
     }
 
-    // ADMIN: GET PENDING
+    //  ADMIN: GET PENDING
     @Transactional(readOnly = true)
     public List<DriverApplication> getPendingApplications() {
         return applicationRepo.findByStatus(DriverStatus.PENDING);
     }
-    // ADMIN APPROVES
+
+    //  ADMIN APPROVE
     @Transactional
     public String approve(Long applicationId, Long adminId) {
 
@@ -73,12 +73,10 @@ public class DriverApplicationService {
 
         // Update user
         user.setRole(Role.ROLE_DRIVER);
-        user.setDriverStatus(DriverStatus.APPROVED);
+        user.setDriverStatus(DriverStatus.ACTIVE); // set ACTIVE when approved
 
-        // ===========================
-        // Check if driver already exists before inserting
-        Driver existingDriver = driverRepository.findByUserId(user.getId()).orElse(null);
-        if (existingDriver == null) {
+        //  Save driver table if not exists
+        driverRepository.findByUserId(user.getId()).orElseGet(() -> {
             Driver driver = Driver.builder()
                     .userId(user.getId())
                     .name(user.getName())
@@ -88,9 +86,8 @@ public class DriverApplicationService {
                     .approved(true)
                     .online(false)
                     .build();
-            driverRepository.save(driver); // insert into drivers table
-        }
-        // ===========================
+            return driverRepository.save(driver);
+        });
 
         applicationRepo.save(app);
         userRepository.save(user);
@@ -99,7 +96,7 @@ public class DriverApplicationService {
         return "Driver approved successfully";
     }
 
-    // ================= ADMIN REJECTS =================
+    //  ADMIN REJECTS
     @Transactional
     public String reject(Long applicationId, String reason, Long adminId) {
 
