@@ -3,6 +3,7 @@ package com.ridesharing.Services;
 import com.ridesharing.Entities.*;
 import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.DriverApplicationRepository;
+import com.ridesharing.Repository.DriverRepository;
 import com.ridesharing.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,6 +19,7 @@ public class DriverApplicationService {
 
     private final UserRepository userRepository;
     private final DriverApplicationRepository applicationRepo;
+    private final DriverRepository driverRepository; // added
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     // ================= USER APPLIES =================
@@ -49,13 +51,13 @@ public class DriverApplicationService {
         return "Driver application submitted successfully";
     }
 
-    // ================= ADMIN: GET ALL PENDING =================
+    // ADMIN: GET PENDING
     @Transactional(readOnly = true)
     public List<DriverApplication> getPendingApplications() {
         return applicationRepo.findByStatus(DriverStatus.PENDING);
     }
 
-    // ================= ADMIN APPROVES =================
+    // ADMIN APPROVESdd
     @Transactional
     public String approve(Long applicationId, Long adminId) {
 
@@ -65,15 +67,29 @@ public class DriverApplicationService {
         User user = userRepository.findById(app.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
+        // Update application
         app.setStatus(DriverStatus.APPROVED);
         app.setReviewedByAdminId(adminId);
         app.setReviewedAt(Instant.now());
 
+        // Update user
         user.setRole(Role.ROLE_DRIVER);
         user.setDriverStatus(DriverStatus.APPROVED);
 
+        // Save driver to drivers table
+        Driver driver = Driver.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .vehicleNumber(app.getVehicleNumber())
+                .vehicleModel(app.getVehicleModel())
+                .approved(true)
+                .online(false)
+                .build();
+
         applicationRepo.save(app);
         userRepository.save(user);
+        driverRepository.save(driver); // insert into drivers table
 
         kafkaTemplate.send("auth-events", "DRIVER_APPROVED:" + user.getId());
         return "Driver approved successfully";
