@@ -9,47 +9,41 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/api/admin/driver-applications")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-public class AdminDriverApplicationController {
+public class AdminDriverApplication {
 
     private final DriverApplicationService service;
     private final JwtUtil jwtUtil;
 
-    @GetMapping
-    public ResponseEntity<List<DriverApplication>> getAll() {
-        return ResponseEntity.ok(service.getAllApplications());
-    }
-
+    //  Only pending applications
     @GetMapping("/pending")
     public ResponseEntity<List<DriverApplication>> getPending() {
         return ResponseEntity.ok(service.getPendingApplications());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<DriverApplication> getOne(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getApplication(id));
-    }
-
+    //  Approve
     @PutMapping("/{id}/approve")
     public ResponseEntity<String> approve(
             @PathVariable Long id,
             @RequestHeader("Authorization") String token
     ) {
         Long adminId = jwtUtil.getUserId(token.substring(7));
-        return ResponseEntity.ok(service.approve(id, adminId));
+        service.approve(id, adminId);
+        return ResponseEntity.ok("Approved");
     }
 
+    //  Reject with short feedback
     @PutMapping("/{id}/reject")
     public ResponseEntity<String> reject(
             @PathVariable Long id,
-            @RequestParam String reason,
+            @RequestParam String feedback,
             @RequestHeader("Authorization") String token
     ) {
         Long adminId = jwtUtil.getUserId(token.substring(7));
-        return ResponseEntity.ok(service.reject(id, reason, adminId));
+        service.reject(id, feedback, adminId);
+        return ResponseEntity.ok("Rejected");
     }
 }
