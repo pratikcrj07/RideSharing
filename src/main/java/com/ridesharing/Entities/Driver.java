@@ -5,10 +5,12 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+
 @Entity
 @Table(name = "drivers", indexes = @Index(columnList = "email"))
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Driver {
 
     @Id
@@ -27,8 +29,9 @@ public class Driver {
     private boolean approved = false;
     private boolean online = false;
 
+    @Enumerated(EnumType.STRING)
+    private DriverStatus status = DriverStatus.ACTIVE; // default ACTIVE when added
+
     @CreationTimestamp
     private Instant createdAt;
-
-
 }
