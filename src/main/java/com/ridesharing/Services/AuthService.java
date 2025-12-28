@@ -46,7 +46,7 @@ public class AuthService {
                         .provider("LOCAL")
                         .enabled(false)
                         .emailVerified(false)
-                        .driverStatus(DriverstatusService.NOT_APPLIED)
+                        .driverStatus(DriverStatus.NOT_APPLIED)
                         .build()
         );
 
@@ -149,7 +149,7 @@ public class AuthService {
                                         .emailVerified(true)
                                         .enabled(true)
                                         .role(Role.ROLE_USER)
-                                        .driverStatus(DriverstatusService.NOT_APPLIED)
+                                        .driverStatus(DriverStatus.NOT_APPLIED)
                                         .build()
                         )
                 );

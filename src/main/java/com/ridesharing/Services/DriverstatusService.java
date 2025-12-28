@@ -1,6 +1,7 @@
 package com.ridesharing.Services;
 
 import com.ridesharing.Entities.Driver;
+import com.ridesharing.Entities.DriverStatus;
 import com.ridesharing.Entities.User;
 import com.ridesharing.Exception.ApiException;
 import com.ridesharing.Repository.DriverRepository;
@@ -27,11 +28,11 @@ public class DriverstatusService {
                 .orElseThrow(() -> new ApiException("User not found"));
 
         // business rule
-        if (user.getDriverStatus() != DriverstatusService.APPROVED) {
+        if (user.getDriverStatus() != DriverStatus.APPROVED) {
             throw new ApiException("Only approved drivers can be suspended");
         }
 
-        user.setDriverStatus(DriverstatusService.SUSPENDED);
+        user.setDriverStatus(DriverStatus.SUSPENDED);
         driver.setOnline(false); // force offline
 
         userRepository.save(user);
@@ -50,11 +51,11 @@ public class DriverstatusService {
         User user = userRepository.findById(driver.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        if (user.getDriverStatus() != DriverstatusService.SUSPENDED) {
+        if (user.getDriverStatus() != DriverStatus.SUSPENDED) {
             throw new ApiException("Driver is not suspended");
         }
 
-        user.setDriverStatus(DriverstatusService.APPROVED);
+        user.setDriverStatus(DriverStatus.APPROVED);
 
         userRepository.save(user);
 
