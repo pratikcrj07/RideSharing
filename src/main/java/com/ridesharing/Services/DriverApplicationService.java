@@ -56,8 +56,7 @@ public class DriverApplicationService {
     public List<DriverApplication> getPendingApplications() {
         return applicationRepo.findByStatus(DriverStatus.PENDING);
     }
-
-    // ADMIN APPROVESdd
+    // ADMIN APPROVES
     @Transactional
     public String approve(Long applicationId, Long adminId) {
 
@@ -76,20 +75,25 @@ public class DriverApplicationService {
         user.setRole(Role.ROLE_DRIVER);
         user.setDriverStatus(DriverStatus.APPROVED);
 
-        // Save driver to drivers table
-        Driver driver = Driver.builder()
-                .userId(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .vehicleNumber(app.getVehicleNumber())
-                .vehicleModel(app.getVehicleModel())
-                .approved(true)
-                .online(false)
-                .build();
+        // ===========================
+        // Check if driver already exists before inserting
+        Driver existingDriver = driverRepository.findByUserId(user.getId()).orElse(null);
+        if (existingDriver == null) {
+            Driver driver = Driver.builder()
+                    .userId(user.getId())
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .vehicleNumber(app.getVehicleNumber())
+                    .vehicleModel(app.getVehicleModel())
+                    .approved(true)
+                    .online(false)
+                    .build();
+            driverRepository.save(driver); // insert into drivers table
+        }
+        // ===========================
 
         applicationRepo.save(app);
         userRepository.save(user);
-        driverRepository.save(driver); // insert into drivers table
 
         kafkaTemplate.send("auth-events", "DRIVER_APPROVED:" + user.getId());
         return "Driver approved successfully";
