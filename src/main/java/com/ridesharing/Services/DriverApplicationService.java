@@ -27,7 +27,7 @@ public class DriverApplicationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        if (user.getDriverStatus() != DriverStatus.NOT_APPLIED) {
+        if (user.getDriverStatus() != DriverstatusService.NOT_APPLIED) {
             throw new ApiException("Already applied or already a driver");
         }
 
@@ -36,11 +36,11 @@ public class DriverApplicationService {
                 .licenseNumber(req.getLicenseNumber())
                 .vehicleNumber(req.getVehicleNumber())
                 .vehicleModel(req.getVehicleModel())
-                .status(DriverStatus.PENDING)
+                .status(DriverstatusService.PENDING)
                 .appliedAt(Instant.now())
                 .build();
 
-        user.setDriverStatus(DriverStatus.PENDING);
+        user.setDriverStatus(DriverstatusService.PENDING);
 
         applicationRepo.save(application);
         userRepository.save(user);
@@ -52,7 +52,7 @@ public class DriverApplicationService {
     // ================= ADMIN: GET ALL PENDING =================
     @Transactional(readOnly = true)
     public List<DriverApplication> getPendingApplications() {
-        return applicationRepo.findByStatus(DriverStatus.PENDING);
+        return applicationRepo.findByStatus(DriverstatusService.PENDING);
     }
 
     // ================= ADMIN APPROVES =================
@@ -65,12 +65,12 @@ public class DriverApplicationService {
         User user = userRepository.findById(app.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        app.setStatus(DriverStatus.APPROVED);
+        app.setStatus(DriverstatusService.APPROVED);
         app.setReviewedByAdminId(adminId);
         app.setReviewedAt(Instant.now());
 
         user.setRole(Role.ROLE_DRIVER);
-        user.setDriverStatus(DriverStatus.APPROVED);
+        user.setDriverStatus(DriverstatusService.APPROVED);
 
         applicationRepo.save(app);
         userRepository.save(user);
@@ -89,12 +89,12 @@ public class DriverApplicationService {
         User user = userRepository.findById(app.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        app.setStatus(DriverStatus.REJECTED);
+        app.setStatus(DriverstatusService.REJECTED);
         app.setRejectionReason(reason);
         app.setReviewedByAdminId(adminId);
         app.setReviewedAt(Instant.now());
 
-        user.setDriverStatus(DriverStatus.REJECTED);
+        user.setDriverStatus(DriverstatusService.REJECTED);
 
         applicationRepo.save(app);
         userRepository.save(user);

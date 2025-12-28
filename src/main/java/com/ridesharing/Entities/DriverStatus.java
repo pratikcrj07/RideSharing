@@ -4,5 +4,7 @@ public enum DriverStatus {
     NOT_APPLIED,
     PENDING,
     APPROVED,
-    REJECTED
+    REJECTED,
+    ACTIVE,
+    SUSPENDED
 }
