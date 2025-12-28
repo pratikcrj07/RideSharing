@@ -17,7 +17,7 @@ public class DriverstatusService {
     private final DriverRepository driverRepository;
     private final UserRepository userRepository;
 
-    //  SUSPEND DRIVER
+    // ================= SUSPEND DRIVER =================
     @Transactional
     public String suspendDriver(Long driverId) {
 
@@ -27,20 +27,24 @@ public class DriverstatusService {
         User user = userRepository.findById(driver.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        if (user.getDriverStatus() != DriverStatus.ACTIVE) {
-            throw new ApiException("Only active drivers can be suspended");
+        // Only approved/active drivers can be suspended
+        if (user.getDriverStatus() != DriverStatus.APPROVED && user.getDriverStatus() != DriverStatus.ACTIVE) {
+            throw new ApiException("Only active or approved drivers can be suspended");
         }
 
+        // Update user
         user.setDriverStatus(DriverStatus.SUSPENDED);
-        driver.setOnline(false);
-
         userRepository.save(user);
+
+        // Update driver table
+        driver.setStatus(DriverStatus.SUSPENDED);
+        driver.setOnline(false); // force offline
         driverRepository.save(driver);
 
         return "Driver suspended successfully";
     }
 
-    //  ACTIVATE DRIVER
+    // ================= ACTIVATE DRIVER =================
     @Transactional
     public String activateDriver(Long driverId) {
 
@@ -54,9 +58,13 @@ public class DriverstatusService {
             throw new ApiException("Driver is not suspended");
         }
 
-        user.setDriverStatus(DriverStatus.ACTIVE);
-
+        // Update user
+        user.setDriverStatus(DriverStatus.APPROVED);
         userRepository.save(user);
+
+        // Update driver table
+        driver.setStatus(DriverStatus.ACTIVE);
+        driverRepository.save(driver);
 
         return "Driver activated successfully";
     }
