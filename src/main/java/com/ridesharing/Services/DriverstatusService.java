@@ -17,7 +17,7 @@ public class DriverstatusService {
     private final DriverRepository driverRepository;
     private final UserRepository userRepository;
 
-    // ================= SUSPEND DRIVER =================
+    // SUSPEND DRIVER
     @Transactional
     public String suspendDriver(Long driverId) {
 
@@ -44,7 +44,7 @@ public class DriverstatusService {
         return "Driver suspended successfully";
     }
 
-    // ================= ACTIVATE DRIVER =================
+    // ACTIVATE DRIVER
     @Transactional
     public String activateDriver(Long driverId) {
 
