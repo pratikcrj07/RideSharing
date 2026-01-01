@@ -8,12 +8,13 @@ import com.ridesharing.Repository.UserRepository;
 import com.ridesharing.Security.JwtUtil;
 import com.ridesharing.Util.GoogleTokenVerifier;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+
+import static io.lettuce.core.KillArgs.Builder.id;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,6 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
     private final EmailService emailService;
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
 
 
@@ -53,7 +53,7 @@ public class AuthService {
         String otp = otpService.generateAndStoreOtp(email);
         emailService.sendOtp(email, otp);
 
-        kafkaTemplate.send("auth-events", "USER_REGISTERED:" + user.getId());
+        System.out.println("Event: USER_REGISTERED - " + user.getId());
     }
 
 
@@ -129,8 +129,8 @@ public class AuthService {
                         .createdAt(Instant.now())
                         .build()
         );
+        System.out.println("Event: Admin_REGISTERED - " + admin.getId());
 
-        kafkaTemplate.send("auth-events", "ADMIN_REGISTERED:" + admin.getId());
         return admin;
     }
 
@@ -164,11 +164,13 @@ public class AuthService {
 
 
     private AuthResponse generateTokens(Long id, String email, String role) {
-        kafkaTemplate.send("auth-events", "LOGIN:" + id);
+        System.out.println("Event: Login - " + id);
+
 
         return new AuthResponse(
                 jwtUtil.generateToken(id, email, role),
                 jwtUtil.generateRefreshToken(id, email, role)
         );
     }
+
 }
