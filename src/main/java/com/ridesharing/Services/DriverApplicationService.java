@@ -6,13 +6,11 @@ import com.ridesharing.Repository.DriverApplicationRepository;
 import com.ridesharing.Repository.DriverRepository;
 import com.ridesharing.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class DriverApplicationService {
@@ -20,7 +18,6 @@ public class DriverApplicationService {
     private final UserRepository userRepository;
     private final DriverApplicationRepository applicationRepo;
     private final DriverRepository driverRepository;
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
     // USER APPLIES
     @Transactional
@@ -46,36 +43,32 @@ public class DriverApplicationService {
         applicationRepo.save(application);
         userRepository.save(user);
 
-        kafkaTemplate.send("auth-events", "DRIVER_APPLIED:" + userId);
+        System.out.println("Event: DRIVER_APPLIED - " + userId);
         return "Driver application submitted successfully";
     }
 
-    //  ADMIN: GET PENDING
+    // ADMIN: GET PENDING
     @Transactional(readOnly = true)
     public List<DriverApplication> getPendingApplications() {
         return applicationRepo.findByStatus(DriverStatus.PENDING);
     }
 
-    //  ADMIN APPROVE
+    // ADMIN APPROVE
     @Transactional
     public String approve(Long applicationId, Long adminId) {
-
         DriverApplication app = applicationRepo.findById(applicationId)
                 .orElseThrow(() -> new ApiException("Application not found"));
 
         User user = userRepository.findById(app.getUserId())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        // Update application
         app.setStatus(DriverStatus.APPROVED);
         app.setReviewedByAdminId(adminId);
         app.setReviewedAt(Instant.now());
 
-        // Update user
         user.setRole(Role.ROLE_DRIVER);
-        user.setDriverStatus(DriverStatus.ACTIVE); // set ACTIVE when approved
+        user.setDriverStatus(DriverStatus.ACTIVE);
 
-        //  Save driver table if not exists
         driverRepository.findByUserId(user.getId()).orElseGet(() -> {
             Driver driver = Driver.builder()
                     .userId(user.getId())
@@ -92,14 +85,13 @@ public class DriverApplicationService {
         applicationRepo.save(app);
         userRepository.save(user);
 
-        kafkaTemplate.send("auth-events", "DRIVER_APPROVED:" + user.getId());
+        System.out.println("Event: DRIVER_APPROVED - " + user.getId());
         return "Driver approved successfully";
     }
 
-    //  ADMIN REJECTS
+    // ADMIN REJECT
     @Transactional
     public String reject(Long applicationId, String reason, Long adminId) {
-
         DriverApplication app = applicationRepo.findById(applicationId)
                 .orElseThrow(() -> new ApiException("Application not found"));
 
@@ -116,7 +108,7 @@ public class DriverApplicationService {
         applicationRepo.save(app);
         userRepository.save(user);
 
-        kafkaTemplate.send("auth-events", "DRIVER_REJECTED:" + user.getId());
+        System.out.println("Event: DRIVER_REJECTED - " + user.getId());
         return "Driver application rejected";
     }
 }
