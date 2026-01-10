@@ -30,6 +30,7 @@ public class DriverApplication {
     private Instant reviewedAt;
     private String rejectionReason;
 
+
     @CreationTimestamp
     private Instant appliedAt;
 }
