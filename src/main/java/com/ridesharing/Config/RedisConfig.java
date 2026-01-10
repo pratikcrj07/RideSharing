@@ -29,5 +29,6 @@ public class RedisConfig {
         tpl.setKeySerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
         tpl.setValueSerializer(new org.springframework.data.redis.serializer.StringRedisSerializer());
         return tpl;
+
     }
 }
