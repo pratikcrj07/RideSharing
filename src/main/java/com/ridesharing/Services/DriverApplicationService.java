@@ -19,7 +19,7 @@ public class DriverApplicationService {
     private final DriverApplicationRepository applicationRepo;
     private final DriverRepository driverRepository;
 
-    // USER APPLIES
+
     @Transactional
     public String apply(Long userId, DriverApplication req) {
         User user = userRepository.findById(userId)

@@ -12,6 +12,5 @@ public interface DriverApplicationRepository
 
     Optional<DriverApplication> findByUserId(Long userId);
 
-    //  REQUIRED for admin pending list
     List<DriverApplication> findByStatus(DriverStatus status);
 }
