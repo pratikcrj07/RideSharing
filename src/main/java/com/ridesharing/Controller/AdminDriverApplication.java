@@ -35,7 +35,7 @@ public class AdminDriverApplication {
         return ResponseEntity.ok("Approved");
     }
 
-    //  Reject with short feedback
+    //  Reject
     @PutMapping("/{id}/reject")
     public ResponseEntity<String> reject(
             @PathVariable Long id,
