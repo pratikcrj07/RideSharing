@@ -44,4 +44,5 @@ public class AdminDriverApplication {
         service.reject(id, feedback, adminId);
         return ResponseEntity.ok("Rejected");
     }
+
 }
