@@ -18,13 +18,11 @@ public class AdminDriverApplication {
     private final DriverApplicationService service;
     private final JwtUtil jwtUtil;
 
-    //  Only pending applications
     @GetMapping("/pending")
     public ResponseEntity<List<DriverApplication>> getPending() {
         return ResponseEntity.ok(service.getPendingApplications());
     }
 
-    //  Approve
     @PutMapping("/{id}/approve")
     public ResponseEntity<String> approve(
             @PathVariable Long id,
